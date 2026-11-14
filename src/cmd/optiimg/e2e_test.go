@@ -294,3 +294,88 @@ func TestE2EBadLang(t *testing.T) {
 		t.Errorf("exit %d want 2", code)
 	}
 }
+
+func TestE2EConvertKeepsOriginal(t *testing.T) {
+	dir := fixtures(t)
+	out, code := runBin(t, dir, nil, "-y", "--format", "webp", "--include", "png", "--lang", "en")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	for _, n := range []string{"photo.webp", "photo.png"} {
+		if _, err := os.Stat(filepath.Join(dir, n)); err != nil {
+			t.Errorf("%s: %v", n, err)
+		}
+	}
+	b, _ := os.ReadFile(filepath.Join(dir, "photo.webp"))
+	if len(b) < 12 || string(b[8:12]) != "WEBP" {
+		t.Error("photo.webp is not WebP")
+	}
+	// the sources were marked, so a second run converts nothing
+	if IsMarked(filepath.Join(dir, "photo.png")) {
+		out, code = runBin(t, dir, nil, "-y", "--format", "webp", "--include", "png", "--lang", "en")
+		if code != 0 || !strings.Contains(out, "Found 0 images") {
+			t.Errorf("second run: exit %d\n%s", code, out)
+		}
+	}
+	noTempFiles(t, dir)
+}
+
+func TestE2EConvertDeleteOriginal(t *testing.T) {
+	dir := fixtures(t)
+	out, code := runBin(t, dir, nil, "-y", "--format", "jxl", "--include", "png", "--delete-original")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "photo.jxl")); err != nil {
+		t.Errorf("photo.jxl: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "photo.png")); err == nil {
+		t.Error("photo.png should have been deleted")
+	}
+}
+
+func TestE2EConvertTargetExists(t *testing.T) {
+	dir := fixtures(t)
+	write(t, dir, "photo.webp", []byte("precious"), 0o644)
+	out, code := runBin(t, dir, nil, "-y", "--format", "webp", "--include", "png", "--lang", "en")
+	if code != 1 || !strings.Contains(out, "already exists") {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if b, _ := os.ReadFile(filepath.Join(dir, "photo.webp")); string(b) != "precious" {
+		t.Error("existing target was overwritten")
+	}
+}
+
+func TestE2EModernInPlace(t *testing.T) {
+	dir := t.TempDir()
+	b, _ := os.ReadFile("../../../testdata/photo.jpg")
+	// make an AVIF input by converting first, then compress that AVIF in place
+	src := fixtures(t)
+	if out, code := runBin(t, src, nil, "-y", "--format", "avif", "--include", "jpg"); code != 0 {
+		t.Fatalf("setup exit %d\n%s", code, out)
+	}
+	_ = b
+	avifBytes, err := os.ReadFile(filepath.Join(src, "photo.avif"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	write(t, dir, "x.avif", avifBytes, 0o644)
+	out, code := runBin(t, dir, nil, "-y")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if !strings.Contains(out, "x.avif") {
+		t.Errorf("x.avif not processed:\n%s", out)
+	}
+}
+
+func TestE2EBadFormat(t *testing.T) {
+	_, code := runBin(t, fixtures(t), nil, "-n", "--format", "gif")
+	if code != 2 {
+		t.Errorf("exit %d want 2", code)
+	}
+	_, code = runBin(t, fixtures(t), nil, "-n", "--delete-original")
+	if code != 2 {
+		t.Errorf("--delete-original without --format: exit %d want 2", code)
+	}
+}

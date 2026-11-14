@@ -14,6 +14,11 @@ See [docs/release.md](docs/release.md).
   progressive output. The memory budget estimate is now per format (PNG 25 B/px, JPEG 45 B/px, low-memory JPEG 18 B/px).
 
 ### Added
+- WebP, AVIF and JPEG XL support (via WebAssembly codecs, still no cgo): they are scanned by default and re-encoded in
+  place with an automatic SSIM-driven quality search. Animated WebP/AVIF and lossless WebP are skipped safely.
+- `--format webp|avif|jxl|jpg|png` converts to another format, writing a new file next to the original (never overwriting an
+  existing file, never writing a larger one); `--delete-original` removes the source afterwards. Transparency is flattened
+  on white when converting to JPEG.
 - `--max`: re-deflate PNG output with Zopfli (about 9% smaller, 10–100× slower; lossless).
 - Non-sRGB ICC profiles (PNG `iCCP`, JPEG APP2) are now preserved instead of dropped, so Display P3/AdobeRGB photos keep
   their colours; `--strip-icc` restores the old behaviour. Reported as `icc_profile_kept` in `--json`.

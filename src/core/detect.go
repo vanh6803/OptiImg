@@ -18,8 +18,31 @@ func Detect(b []byte) (Format, error) {
 		return FormatPNG, nil
 	case len(b) >= 3 && b[0] == 0xFF && b[1] == 0xD8 && b[2] == 0xFF:
 		return FormatJPEG, nil
+	case len(b) >= 12 && string(b[:4]) == "RIFF" && string(b[8:12]) == "WEBP":
+		return FormatWebP, nil
+	case len(b) >= 12 && string(b[4:8]) == "ftyp" && isAVIFBrand(b):
+		return FormatAVIF, nil
+	case len(b) >= 2 && b[0] == 0xFF && b[1] == 0x0A, bytes.HasPrefix(b, []byte("\x00\x00\x00\x0cJXL \r\n\x87\n")):
+		return FormatJXL, nil
 	}
 	return "", ErrUnsupportedFormat
+}
+
+// isAVIFBrand checks the major and compatible brands of an ISO-BMFF ftyp box.
+func isAVIFBrand(b []byte) bool {
+	n := int(binary.BigEndian.Uint32(b[:4]))
+	if n < 16 || n > len(b) {
+		n = min(len(b), 64)
+	}
+	for i := 8; i+4 <= n; i += 4 {
+		if i == 12 { // minor version, not a brand
+			continue
+		}
+		if s := string(b[i : i+4]); s == "avif" || s == "avis" {
+			return true
+		}
+	}
+	return false
 }
 
 // CheckLimits validates size limits from the header, before full decoding.
@@ -36,6 +59,8 @@ func CheckLimits(b []byte, f Format, l Limits) (w, h int, err error) {
 		cfg, err = png.DecodeConfig(bytes.NewReader(b))
 	case FormatJPEG:
 		cfg, err = jpeg.DecodeConfig(bytes.NewReader(b))
+	case FormatWebP, FormatAVIF, FormatJXL:
+		cfg, err = decodeConfigModern(b, f)
 	default:
 		return 0, 0, ErrUnsupportedFormat
 	}

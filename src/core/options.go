@@ -8,7 +8,18 @@ type Format string
 const (
 	FormatPNG  Format = "png"
 	FormatJPEG Format = "jpeg"
+	FormatWebP Format = "webp"
+	FormatAVIF Format = "avif"
+	FormatJXL  Format = "jxl"
 )
+
+// Ext returns the conventional file extension (without dot) for f.
+func (f Format) Ext() string {
+	if f == FormatJPEG {
+		return "jpg"
+	}
+	return string(f)
+}
 
 // Limits bounds the input accepted by Compress. A zero field means no limit;
 // memory is bounded by MaxPixels, not by the compressed file size.
@@ -25,6 +36,7 @@ type Options struct {
 	Quality  int     // JPEG quality, 0 = auto search
 	WhiteBG  bool    // flatten transparency on white
 	Zopfli   int     // PNG: Zopfli iterations for the final deflate (0 = off; slow but ~9% smaller)
+	Convert  Format  // output format; "" keeps the input format
 	StripICC bool    // drop non-sRGB ICC profiles (default: keep them so colours do not shift)
 	Limits   Limits
 }

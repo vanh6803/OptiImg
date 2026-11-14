@@ -237,19 +237,15 @@ Mục tiêu: mã hóa lại với chất lượng thấp nhất còn đạt ngư
 
 ---
 
-## 4. Nhánh WebP / AVIF / JXL
+## 4. Nhánh WebP / AVIF / JXL (đã cài đặt)
 
-- Dùng encoder tương ứng, chế độ lossy.
-- Chọn chất lượng: chia đôi theo SSIM như JPEG (mục 3.2), khoảng mặc định:
-
-  | Định dạng | Khoảng q |
-  |---|---|
-  | WebP | 55–85 |
-  | AVIF | 40–75 |
-  | JXL | 55–85 (hoặc distance 1.0–3.0) |
-
-- Giữ alpha nếu định dạng hỗ trợ (cả ba đều hỗ trợ).
-- Đổi đuôi file theo định dạng mới.
+- Cùng cơ chế với JPEG: chia đôi chất lượng trong một khoảng, đo SSIM trên ảnh giải mã lại, chọn q thấp nhất còn đạt
+  `minSSIM`; không đạt thì lấy cận trên. Khoảng q: WebP [50, 80], AVIF [40, 70], JXL [50, 80].
+- Ảnh > 2 MP dò q trên mẫu ghép 4 mảnh 512×512 rồi mã hóa đầy đủ đúng một lần (như JPEG).
+- Tham số tốc độ: WebP method 4, AVIF speed 8, JXL effort 5 (ảnh 4K: ≈ 2 s, 6 s, 9 s; kích thước chênh < 1% so với tham số chậm nhất).
+- `--lossless` dùng chế độ lossless của từng codec. Ảnh có alpha giữ alpha; đổi sang JPEG thì trộn nền trắng.
+- Bỏ qua: WebP/AVIF động, WebP lossless (decoder ra YUV 4:2:0 nên nén lại sẽ làm ảnh xấu đi).
+- Profile ICC không được ghi vào WebP/AVIF/JXL (cảnh báo `icc_profile_dropped`).
 
 ---
 

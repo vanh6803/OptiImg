@@ -65,6 +65,7 @@ optiimg -n              # chỉ liệt kê ảnh sẽ xử lý, không ghi gì
 optiimg -y              # bỏ qua câu hỏi xác nhận (dùng trong script)
 optiimg -y -j 2         # dùng 2 worker, máy ít bị nặng hơn
 optiimg --no-recursive  # không vào thư mục con
+optiimg --format webp   # đổi PNG/JPEG sang WebP, file mới nằm cạnh file gốc (cũng có avif, jxl, jpg, png)
 optiimg --version
 ```
 
@@ -94,6 +95,8 @@ optiimg                 # 3. nén
 | `--lang vi\|en` | Ngôn ngữ thông báo (mặc định `vi`; hoặc đặt `OPTIIMG_LANG=en`). |
 | `--strip-icc` | Bỏ cả profile màu ICC không phải sRGB (mặc định giữ để màu không bị lệch). |
 | `--max` | PNG nhỏ hơn thêm khoảng 9% nhờ Zopfli nhưng chậm hơn 10–100 lần. Hợp để chạy một lần cuối cho ảnh đem phát hành. |
+| `--format F` | Đổi sang `webp`, `avif`, `jxl`, `jpg` hoặc `png`: tạo file mới cạnh file gốc (file gốc giữ nguyên và được đánh dấu). Không bao giờ ghi đè file có sẵn; kết quả không nhỏ hơn thì không ghi. |
+| `--delete-original` | Đi kèm `--format`: xóa file gốc sau khi tạo file mới thành công. |
 | `--json` | In mỗi file một dòng JSON, dòng cuối là tổng kết. Tiện cho script. |
 | `-q`, `--quiet` | Chỉ in tổng kết cuối. |
 
@@ -110,7 +113,8 @@ Mã thoát: `0` không có lỗi · `1` có ít nhất một file lỗi · `2` s
   vẫn giữ chất lượng. Giữ nguyên độ trong suốt.
 - **JPEG:** mã hóa lại bằng jpegli (progressive, 4:2:0), tự dò mức chất lượng thấp nhất còn đạt ngưỡng.
   Ảnh chụp từ điện thoại có thông tin xoay (EXIF) sẽ được xoay đúng rồi lưu lại.
-- **Không đổi định dạng:** PNG vẫn là PNG, JPEG vẫn là JPEG, tên file giữ nguyên. Định dạng được nhận bằng nội dung file,
+- **Mặc định giữ nguyên định dạng:** PNG vẫn là PNG, JPEG vẫn là JPEG, WebP vẫn là WebP… tên file giữ nguyên. Dùng `--format` nếu muốn đổi (ví dụ JPEG → AVIF thường nhỏ hơn JPEG đã tối ưu khoảng 25–30%).
+- **WebP / AVIF / JPEG XL:** tự dò chất lượng theo cùng ngưỡng SSIM. WebP/AVIF động và WebP lossless bị bỏ qua (bộ giải mã WebP đang dùng ra 4:2:0 nên nén lại sẽ làm ảnh xấu đi). Định dạng được nhận bằng nội dung file,
   không phụ thuộc đuôi.
 - **Xóa metadata** (EXIF, GPS, ảnh thu nhỏ…) để file nhỏ hơn. **Giữ profile màu ICC không phải sRGB** (ví dụ Display P3 từ điện thoại) để màu không bị lệch; dùng `--strip-icc` để bỏ. Kết quả JSON báo `icc_profile_kept` / `icc_profile_dropped`.
 - **Không bao giờ làm file to ra:** nếu nén xong không nhỏ hơn bản gốc, file được giữ nguyên.
@@ -137,7 +141,8 @@ Tỉ lệ giảm phụ thuộc nội dung ảnh: ảnh phẳng/bầu trời gi�
 
 ## Giới hạn
 
-- Chỉ hỗ trợ **PNG và JPEG**. RAW (CR2, DNG, ARW…), WebP, AVIF, JXL, GIF chưa hỗ trợ; các file này bị bỏ qua và không bị sửa.
+- Hỗ trợ **PNG, JPEG, WebP, AVIF, JPEG XL**. RAW (CR2, DNG, ARW…), GIF và ảnh động chưa hỗ trợ; các file này bị bỏ qua và không bị sửa.
+- AVIF và JPEG XL mã hóa chậm hơn JPEG (ảnh 4K khoảng 6–9 giây mỗi ảnh, WebP khoảng 2 giây).
 - Ảnh tối đa **100 megapixel**. Không giới hạn dung lượng file.
 - **Bộ nhớ:** ảnh 50 MP cần khoảng 2,5 GB RAM khi nén JPEG. Máy ít RAM nên đặt `--max-mem` thấp hơn và `-j 1`.
 - Hệ thống file không hỗ trợ thuộc tính mở rộng (một số ổ FAT/exFAT, ổ mạng) thì không đánh dấu được "đã nén":

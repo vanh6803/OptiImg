@@ -34,6 +34,8 @@ func EstimateMem(f core.Format, pixels int64) int64 {
 	switch {
 	case f == core.FormatPNG:
 		return pixels * 25
+	case f == core.FormatAVIF || f == core.FormatJXL || f == core.FormatWebP:
+		return pixels * 40
 	case pixels > jpegenc.LowMemPixels:
 		return pixels * 18
 	}
@@ -43,6 +45,7 @@ func EstimateMem(f core.Format, pixels int64) int64 {
 // Result is the outcome of one job.
 type Result struct {
 	Item     Item
+	Output   string // path written (differs from Item.Path when converting)
 	Report   core.Report
 	Err      error
 	Duration time.Duration

@@ -34,12 +34,17 @@ optiimg [path] [flags]
       --keep-mtime     giữ thời gian sửa đổi gốc của file
       --include EXT    chỉ xử lý các đuôi này, ví dụ png,jpg
       --exclude GLOB   bỏ qua đường dẫn khớp mẫu (có thể lặp lại)
+      --format F       đổi sang png|jpg|webp|avif|jxl: tạo file mới cạnh file gốc (không ghi đè file có sẵn)
+      --delete-original  với --format: xóa file gốc sau khi tạo file mới thành công
+      --max            PNG: Zopfli (nhỏ hơn ~9%, chậm 10–100 lần)
+      --strip-icc      bỏ cả profile màu ICC không phải sRGB
+      --lang vi|en     ngôn ngữ thông báo
       --json           in kết quả mỗi file một dòng JSON
   -q, --quiet          chỉ in tổng kết cuối
       --version        in phiên bản (ví dụ "optiimg v0.1.0") rồi thoát, mã 0
 ```
 
-Chế độ ghi đè **không đổi định dạng**: PNG vẫn là PNG, JPEG vẫn là JPEG.
+Mặc định ghi đè **không đổi định dạng**: PNG vẫn là PNG, JPEG vẫn là JPEG (WebP/AVIF/JXL cũng vậy). Với `--format` thì tạo file mới (đổi đuôi) cạnh file gốc; file gốc được đánh dấu "đã nén" để lần chạy sau bỏ qua, hoặc bị xóa nếu có `--delete-original`.
 Đổi định dạng sẽ làm đổi đuôi file, tức là tạo ra file khác, nên không nằm trong luồng này.
 
 ---
@@ -68,7 +73,7 @@ không tự ý ghi đè.
    - File không ghi được (không có quyền ghi).
    - File tạm còn sót của OptiImg (`.*.optiimg-tmp`).
    - Đường dẫn khớp `--exclude`.
-3. Lọc theo đuôi trước (`.png .jpg .jpeg .webp .avif .jxl`), rồi **xác nhận bằng magic bytes**
+3. Lọc theo đuôi trước (mặc định `.png .jpg .jpeg .webp .avif .jxl`), rồi **xác nhận bằng magic bytes**
    khi xử lý (mục 1.1 trong `compression-logic.md`).
 4. Bỏ qua file đã có dấu “đã nén” (mục 7), trừ khi dùng `--force`.
 5. Sắp xếp danh sách theo đường dẫn để thứ tự chạy và log ổn định.

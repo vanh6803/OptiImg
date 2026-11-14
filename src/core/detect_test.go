@@ -30,7 +30,7 @@ func TestDetect(t *testing.T) {
 		{"png", pngBytes(t, 4, 4), FormatPNG, nil},
 		{"jpeg", []byte{0xFF, 0xD8, 0xFF, 0xE0, 0, 0}, FormatJPEG, nil},
 		{"gif", []byte("GIF89a......"), "", ErrUnsupportedFormat},
-		{"webp", []byte("RIFF\x00\x00\x00\x00WEBPVP8 "), "", ErrUnsupportedFormat},
+		{"bmp", []byte("BM\x00\x00\x00\x00\x00\x00"), "", ErrUnsupportedFormat},
 		{"empty", nil, "", ErrUnsupportedFormat},
 	}
 	for _, c := range cases {

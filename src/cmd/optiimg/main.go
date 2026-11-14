@@ -35,10 +35,10 @@ type config struct {
 	path                                   string
 	yes, dry, noRec, lossless, force, keep bool
 	jsonOut, quiet, showVersion, stripICC  bool
-	max                                    bool
+	max, delOrig                           bool
 	jobs, maxMemMB                         int
 	minSSIM                                float64
-	include, lang                          string
+	include, lang, format                  string
 	exclude                                listFlag
 }
 
@@ -63,6 +63,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	b(&c.force, "force", "", tr("f.force"))
 	b(&c.stripICC, "strip-icc", "", tr("f.stripicc"))
 	b(&c.max, "max", "", tr("f.max"))
+	b(&c.delOrig, "delete-original", "", tr("f.delorig"))
 	b(&c.keep, "keep-mtime", "", tr("f.keep"))
 	b(&c.jsonOut, "json", "", tr("f.json"))
 	b(&c.quiet, "quiet", "q", tr("f.quiet"))
@@ -71,6 +72,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	fs.IntVar(&c.jobs, "j", 0, tr("alias", "jobs"))
 	fs.IntVar(&c.maxMemMB, "max-mem", 2048, tr("f.maxmem"))
 	fs.Float64Var(&c.minSSIM, "min-ssim", 0.98, tr("f.minssim"))
+	fs.StringVar(&c.format, "format", "", tr("f.format"))
 	fs.StringVar(&c.include, "include", "", tr("f.include"))
 	fs.StringVar(&c.lang, "lang", curLang, tr("f.lang"))
 	fs.Var(&c.exclude, "exclude", tr("f.exclude"))
@@ -92,6 +94,18 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	}
 	if c.lang != "vi" && c.lang != "en" {
 		return c, errors.New(tr("err.lang"))
+	}
+	c.format = strings.ToLower(c.format)
+	if c.format == "jpeg" {
+		c.format = "jpg"
+	}
+	switch c.format {
+	case "", "png", "jpg", "webp", "avif", "jxl":
+	default:
+		return c, errors.New(tr("err.format"))
+	}
+	if c.delOrig && c.format == "" {
+		return c, errors.New(tr("err.delorig"))
 	}
 	if c.minSSIM <= 0 || c.minSSIM > 1 {
 		return c, errors.New(tr("err.minssim"))
@@ -255,15 +269,32 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 			fmt.Fprint(stdout, tr("compressing", filepath.Base(it.Path), float64(w*h)/1e6, humanSize(int64(len(in)))))
 			outMu.Unlock()
 		}
-		out, rep, err := core.Compress(in, opts)
+		jobOpts := opts
+		of, target, convert := f, it.Path, false
+		if c.format != "" {
+			want := formatFromExt(c.format)
+			if want != f {
+				of, convert = want, true
+				jobOpts.Convert = want
+				target = strings.TrimSuffix(it.Path, filepath.Ext(it.Path)) + "." + want.Ext()
+			}
+		}
+		out, rep, err := core.Compress(in, jobOpts)
 		res.Report = rep
 		if err != nil {
 			res.Err = err
 			return res
 		}
 		final := in
+		res.Output = it.Path
 		if rep.Skipped == "" {
-			if ow, oh, err := core.CheckLimits(out, f, opts.Limits); err != nil || ow != rep.Width || oh != rep.Height {
+			if convert {
+				if _, statErr := os.Lstat(target); statErr == nil {
+					res.Err = errors.New(tr("err.exists", filepath.Base(target)))
+					return res
+				}
+			}
+			if ow, oh, err := core.CheckLimits(out, of, opts.Limits); err != nil || ow != rep.Width || oh != rep.Height {
 				res.Err = errors.New(tr("err.verify", err))
 				return res
 			}
@@ -275,18 +306,30 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 			}
 			writing.Add(1)
 			writeMu.Unlock()
-			err = ReplaceAtomic(it.Path, out, it.Mode, it.ModTime, c.keep)
+			err = ReplaceAtomic(target, out, it.Mode, it.ModTime, c.keep)
 			writing.Done()
 			if err != nil {
 				res.Err = err
 				return res
 			}
-			final = out
+			final, res.Output = out, target
+			if convert && c.delOrig {
+				if err := os.Remove(it.Path); err != nil {
+					res.Err = err
+					return res
+				}
+			}
 		}
-		if err := Mark(it.Path, final); errors.Is(err, ErrMarkUnsupported) {
-			markWarn.Do(func() {
-				fmt.Fprintln(stderr, tr("warn.mark"))
-			})
+		markFile := func(path string, content []byte) {
+			if err := Mark(path, content); errors.Is(err, ErrMarkUnsupported) {
+				markWarn.Do(func() {
+					fmt.Fprintln(stderr, tr("warn.mark"))
+				})
+			}
+		}
+		markFile(res.Output, final)
+		if convert && res.Output != it.Path && !c.delOrig {
+			markFile(it.Path, in) // the source is done too: the next run skips it
 		}
 		return res
 	}
@@ -302,7 +345,11 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		switch {
 		case c.jsonOut:
 			rep := r.Report
-			rep.Input, rep.Output = rel, rel
+			outRel, _ := filepath.Rel(root, r.Output)
+			if r.Output == "" {
+				outRel = rel
+			}
+			rep.Input, rep.Output = rel, outRel
 			if r.Err != nil {
 				b, _ := json.Marshal(map[string]any{"input": rel, "error": r.Err.Error()})
 				fmt.Fprintln(stdout, string(b))
@@ -330,4 +377,18 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+func formatFromExt(ext string) core.Format {
+	switch ext {
+	case "jpg":
+		return core.FormatJPEG
+	case "png":
+		return core.FormatPNG
+	case "webp":
+		return core.FormatWebP
+	case "avif":
+		return core.FormatAVIF
+	}
+	return core.FormatJXL
 }

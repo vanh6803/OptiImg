@@ -23,6 +23,8 @@ func Decode(b []byte, f Format) (image.Image, error) {
 				img = orient(img, o)
 			}
 		}
+	case FormatWebP, FormatAVIF, FormatJXL:
+		img, err = decodeModern(b, f)
 	default:
 		return nil, ErrUnsupportedFormat
 	}

@@ -40,7 +40,7 @@ func isTempName(name string) bool {
 func Scan(root string, o ScanOptions) (ScanResult, error) {
 	include := o.Include
 	if len(include) == 0 {
-		include = []string{"png", "jpg", "jpeg"}
+		include = []string{"png", "jpg", "jpeg", "webp", "avif", "jxl"}
 	}
 	allowed := map[string]bool{}
 	for _, e := range include {

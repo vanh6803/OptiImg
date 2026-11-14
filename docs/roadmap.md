@@ -5,7 +5,7 @@ OptiImg là công cụ **chỉ chạy trên terminal** (CLI). Không có GUI tro
 | Giai đoạn | Nội dung | Plan |
 |---|---|---|
 | **1. Core + CLI** | PNG + JPEG, CLI quét thư mục, ghi đè tại chỗ, giới hạn luồng, build đa nền tảng | [plans/2026-11-14-optiimg-core-cli.md](superpowers/plans/2026-11-14-optiimg-core-cli.md) |
-| 2. Định dạng mới + màu | WebP / AVIF / JXL (nén và tùy chọn đổi định dạng ra file mới), chuyển ICC → sRGB (sRGB, Display P3), zopfli, `--lossless` thử 5 bộ lọc | viết sau khi xong giai đoạn 1 |
+| 2. Định dạng mới + màu | **Đã làm (nhánh dev):** WebP / AVIF / JXL (nén tại chỗ và `--format`), giữ ICC, `--max` (Zopfli), `--lang`. Chưa làm: chuyển ICC → sRGB thật sự, `--lossless` thử 5 bộ lọc | — |
 | 3. Cải tiến chất lượng | Dither thích ứng theo vùng, đo SSIM trên ảnh thu nhỏ để tăng tốc, so sánh với dịch vụ tham chiếu trên bộ ảnh lớn hơn | tùy kết quả giai đoạn 1 |
 
 ## Thứ tự trong giai đoạn 1
@@ -40,3 +40,8 @@ Task 11 cần Task 7.
 
 - JPEG > 4 MP: q tìm trên mosaic 4 mảnh 512×512 nên SSIM/PSNR trong Report là của mẫu, không phải toàn ảnh.
 - PNG: dither chỉ thử khi bản không dither đã đạt cổng chất lượng (tiết kiệm ~70% thời gian ảnh chụp).
+
+- WebP: decoder của `gen2brain/webp` luôn ra YUV 4:2:0 (kể cả lossless), nên WebP lossless bị từ chối, và SSIM/PSNR đo trên kết quả giải mã WebP thấp hơn thực tế. Cần decoder RGBA nếu muốn đo chuẩn.
+- ICC: chỉ giữ nguyên profile cho PNG/JPEG; sang WebP/AVIF/JXL profile bị bỏ (cảnh báo `icc_profile_dropped`).
+- Dither thích ứng theo vùng chưa làm.
+- JXL động chưa nhận diện được (có thể mất hoạt ảnh khi nén tại chỗ).

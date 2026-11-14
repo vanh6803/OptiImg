@@ -3,7 +3,8 @@
 🇬🇧 **English** · 🇻🇳 [Tiếng Việt](README.vi.md)
 
 An image compressor that runs **entirely on your machine** (offline), written in Go. Run one command in a folder of
-images and OptiImg compresses every PNG and JPEG inside, overwriting them in place. Files shrink by roughly **70–80%**
+images and OptiImg compresses every PNG, JPEG, WebP, AVIF and JPEG XL inside, overwriting them in place (or converting
+them to a newer format). Files shrink by roughly **70–80%**
 with differences that are hard to see by eye.
 
 - Terminal only, no GUI.
@@ -68,6 +69,7 @@ optiimg -n              # dry run: list what would be processed, write nothing
 optiimg -y              # skip the confirmation prompt (for scripts)
 optiimg -y -j 2         # use 2 workers: lighter on the machine
 optiimg --no-recursive  # do not descend into subfolders
+optiimg --format webp   # convert PNG/JPEG to WebP files next to the originals (also avif, jxl, jpg, png)
 optiimg --version
 ```
 
@@ -97,6 +99,8 @@ optiimg                    # 3. compress
 | `--lang vi\|en` | Message language (default `vi`; or set `OPTIIMG_LANG=en`). |
 | `--strip-icc` | Also drop non-sRGB ICC colour profiles (kept by default so colours do not shift). |
 | `--max` | PNG about 9% smaller using Zopfli, but 10–100× slower. Good for a one-off final pass on assets you publish. |
+| `--format F` | Convert to `webp`, `avif`, `jxl`, `jpg` or `png`: writes a new file next to the original (the original is kept and marked). Files are never overwritten, and a result that is not smaller is not written. |
+| `--delete-original` | With `--format`: delete the original once the new file is written. |
 | `--json` | One JSON line per file, plus a final summary line. Handy for scripts. |
 | `-q`, `--quiet` | Print only the final summary. |
 
@@ -113,8 +117,11 @@ Exit codes: `0` no errors · `1` at least one file failed · `2` bad arguments o
   colours that still meet the quality target. Transparency is preserved.
 - **JPEG:** re-encoded with jpegli (progressive, 4:2:0), automatically finding the lowest quality that still meets the target.
   Phone photos with EXIF rotation are rotated correctly before saving.
-- **Format never changes:** PNG stays PNG, JPEG stays JPEG, file names are unchanged. The format is detected from file
-  contents, not the extension.
+- **Format is kept by default:** PNG stays PNG, JPEG stays JPEG, WebP stays WebP… and file names are unchanged. The format is
+  detected from file contents, not the extension. With `--format` you can convert instead (e.g. JPEG → AVIF is typically
+  25–30% smaller than a well-tuned JPEG).
+- **WebP / AVIF / JPEG XL:** quality is searched automatically with the same SSIM target. Animated WebP/AVIF and lossless
+  WebP are skipped (the WebP decoder used outputs 4:2:0, so re-encoding would degrade them).
 - **Metadata is stripped** (EXIF, GPS, thumbnails…) to save space. Non-sRGB **ICC colour profiles are kept** (e.g. Display P3 from phones) so colours do not shift; use `--strip-icc` to drop them. The JSON output reports `icc_profile_kept` / `icc_profile_dropped`.
 - **Never makes a file bigger:** if the result is not smaller than the original, the original is kept.
 - **Re-runs do not recompress:** processed images are marked (extended attribute `user.optiimg`) and skipped next time.
@@ -142,7 +149,8 @@ Savings depend on content: flat areas and skies shrink a lot, highly detailed im
 
 ## Limits
 
-- Only **PNG and JPEG**. RAW (CR2, DNG, ARW…), WebP, AVIF, JXL and GIF are not supported; they are skipped and never modified.
+- Supported: **PNG, JPEG, WebP, AVIF, JPEG XL**. RAW (CR2, DNG, ARW…), GIF and animated images are not supported; they are skipped and never modified.
+- AVIF and JPEG XL encode slower than JPEG (a 4K photo takes roughly 6–9 s each, WebP about 2 s).
 - Images up to **100 megapixels**. No limit on file size.
 - **Memory:** a 50 MP image needs about 2.5 GB of RAM when compressing JPEG. On low-RAM machines use a lower `--max-mem` and `-j 1`.
 - File systems without extended attributes (some FAT/exFAT volumes, network drives) cannot store the "already compressed"
