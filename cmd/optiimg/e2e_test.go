@@ -106,6 +106,11 @@ func TestE2EInPlace(t *testing.T) {
 			t.Errorf("%s: %d -> %d", n, before[n], after[n])
 		}
 	}
+	for _, want := range []string{"giảm ", "Dung lượng:", "Thời gian:", "Chậm nhất:", "Bộ nhớ tiến trình"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%s", want, out)
+		}
+	}
 	if b, _ := os.ReadFile(filepath.Join(dir, ".hidden/x.png")); string(b) != "not touched" {
 		t.Error(".hidden/x.png changed")
 	}

@@ -38,7 +38,7 @@ Không khớp → lỗi `ErrUnsupportedFormat`.
 
 ### 1.2 Giới hạn an toàn
 
-- Kích thước file tối đa (mặc định 50 MB).
+- Không giới hạn dung lượng file (bộ nhớ phụ thuộc số pixel, không phụ thuộc dung lượng nén; PNG 8K ≈ 92 MB vẫn chạy bình thường).
 - Số pixel tối đa (mặc định 100 MP). Kiểm tra từ header **trước khi** giải mã
   để tránh ảnh “bom giải nén”.
 
@@ -326,5 +326,5 @@ file trên đĩa. Mọi việc đọc, ghi, ghi đè đều do lớp CLI đảm 
 | JPEG progressive | bật |
 | JPEG lấy mẫu màu | 4:2:0 |
 | Metadata | xóa hết |
-| Giới hạn file | 50 MB / 100 MP |
+| Giới hạn ảnh | không giới hạn dung lượng / 100 MP |
 | Worker | clamp(NumCPU / 2, 1, 4), xem `cli-flow.md` |

@@ -78,9 +78,20 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 			img = FlattenWhite(img)
 		}
 		q := o.Quality
-		if q > 0 {
+		// Big images: search the quality on a small mosaic, then encode the
+		// full image once. Metrics in the Report then describe the sample.
+		var sample image.Image
+		if q <= 0 && r.Width*r.Height > jpegenc.SampleThreshold {
+			sample = jpegenc.Sample(img, 512)
+		}
+		switch {
+		case q > 0:
 			enc, err = jpegenc.Encode(img, q)
-		} else {
+		case sample != nil:
+			if _, q, _, err = jpegenc.EncodeAuto(sample, jpegQLo, jpegQHi, o.MinSSIM); err == nil {
+				enc, err = jpegenc.Encode(img, q)
+			}
+		default:
 			enc, q, _, err = jpegenc.EncodeAuto(img, jpegQLo, jpegQHi, o.MinSSIM)
 		}
 		if err != nil {
@@ -92,6 +103,18 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 				return skip(in, r), r.withSkip(), nil
 			}
 		}
+		if sample != nil {
+			se, err := jpegenc.Encode(sample, q)
+			if err != nil {
+				return nil, r, err
+			}
+			sd, err := jpeg.Decode(bytes.NewReader(se))
+			if err != nil {
+				return nil, r, err
+			}
+			r.SSIM, r.PSNR = metric.SSIM(sample, sd), metric.PSNR(sample, sd)
+			return finish(in, enc, r, f)
+		}
 		decoded, err = jpeg.Decode(bytes.NewReader(enc))
 		if err != nil {
 			return nil, r, err
@@ -99,6 +122,11 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 		r.SSIM = metric.SSIM(img, decoded)
 	}
 	r.PSNR = metric.PSNR(img, decoded)
+	return finish(in, enc, r, f)
+}
+
+// finish applies the ICC warning and the size guard.
+func finish(in, enc []byte, r Report, f Format) ([]byte, Report, error) {
 	if hasICC(in, f) {
 		r.Warnings = append(r.Warnings, "icc_profile_dropped")
 	}

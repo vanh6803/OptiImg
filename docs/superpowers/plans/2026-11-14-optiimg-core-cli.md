@@ -19,14 +19,14 @@
 - Module Go: `optiimg`. Go ≥ 1.27. **Không cgo** (`CGO_ENABLED=0` phải build được CLI).
 - Phase 1 chỉ xử lý **PNG và JPEG**. Không đổi định dạng. WebP/AVIF/JXL và chuyển ICC → sRGB thuộc plan sau (xem `docs/roadmap.md`). Sản phẩm chỉ chạy trên terminal — không có GUI.
 - Metadata: xóa hết. Giữ duy nhất JFIF (APP0) với JPEG (cho phép không có APP0).
-- Giới hạn mặc định: file ≤ 50 MB, ảnh ≤ 100 MP; kiểm tra từ header trước khi giải mã.
+- Giới hạn mặc định: ảnh ≤ 100 MP, không giới hạn dung lượng file (đổi sau khi thử ảnh 8K); kiểm tra từ header trước khi giải mã.
 - `minSSIM` mặc định `0.98`; dither mặc định `1.0`; PNG tối đa `256` màu.
 - JPEG: q auto trong `[55, 80]` (đã hạ từ 85 ở Task 7: ảnh tham chiếu không đạt SSIM 0,98 ngay cả ở q85 và sẽ vượt ngưỡng 36%), progressive, 4:2:0, tối ưu Huffman.
 - Palette PNG: N phải thỏa SSIM ≥ `minSSIM` **và** PSNR ≥ 45 dB (Task 4/7); dither bị bỏ khi làm SSIM tệ hơn bản không dither.
 - Trọng số khoảng cách màu: `0.50·ΔR² + 1.00·ΔG² + 0.45·ΔB² + 0.625·ΔA²` (premultiplied).
 - SSIM: luma `Y = 0.299R + 0.587G + 0.114B`, cửa sổ 8×8 bước 4, `C1=(0.01·255)²`, `C2=(0.03·255)²`; ảnh có alpha đo trên nền trắng và nền đen, lấy giá trị thấp hơn.
 - Worker mặc định `clamp(NumCPU/2, 1, 4)`; `--jobs` tối đa NumCPU.
-- Token bộ nhớ: ≤ 12 MP → 1; ≤ 40 MP → 2; > 40 MP → toàn bộ token.
+- Bộ nhớ: ngân sách 2 GB (`--max-mem`), mỗi ảnh tốn pixel × 50 B, ảnh lớn hơn ngân sách chạy một mình (thay cho token 1/2/all ở bản đầu).
 - File tạm: `.<tên>.optiimg-tmp` cùng thư mục. Dấu xattr: tên `user.optiimg`, giá trị `v1:<sha256 hex>`; Windows: ADS `<path>:optiimg`.
 - Mã thoát: `0` ok, `1` có file lỗi, `2` lỗi tham số / không xác nhận.
 - Ngưỡng test tham chiếu (đặt theo **tỉ lệ** so với ảnh gốc, quy đổi từ số đo của dịch vụ tham chiếu + 15%; ảnh test là ảnh công khai tải từ Wikimedia Commons, không còn là ảnh gốc của lần đo): `logo.png ≤ 5000 B` (ảnh sinh bằng code nên giữ tuyệt đối), `photo.png ≤ 34% kích thước gốc`, `photo.jpg ≤ 36% kích thước gốc`, PSNR tối thiểu `45 / 30 / 33 dB`. **Không nới ngưỡng test**; nếu trượt thì chỉnh thuật toán.

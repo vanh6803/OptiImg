@@ -62,3 +62,35 @@ func TestCompress16BitPNG(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCompressLargeJPEGUsesSample(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 2600, 1600)) // 4.16 MP > sample threshold
+	for y := 0; y < 1600; y++ {
+		for x := 0; x < 2600; x++ {
+			img.SetRGBA(x, y, color.RGBA{uint8(x/11 + y/9), uint8((x*y)>>9) ^ uint8(x), uint8(y / 7), 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 97}); err != nil {
+		t.Fatal(err)
+	}
+	out, r, err := Compress(buf.Bytes(), DefaultOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Skipped == "" {
+		cfg, err := jpeg.DecodeConfig(bytes.NewReader(out))
+		if err != nil || cfg.Width != 2600 || cfg.Height != 1600 {
+			t.Fatalf("output %v %v", cfg, err)
+		}
+		if r.Quality < 55 || r.Quality > 80 || r.SSIM <= 0 {
+			t.Errorf("report %+v", r)
+		}
+	}
+}
+
+func TestDefaultLimitsAllowLargeFiles(t *testing.T) {
+	if DefaultOptions().Limits.MaxBytes != 0 {
+		t.Error("default MaxBytes must be unlimited")
+	}
+}

@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -34,7 +35,7 @@ type config struct {
 	path                                   string
 	yes, dry, noRec, lossless, force, keep bool
 	jsonOut, quiet, showVersion            bool
-	jobs                                   int
+	jobs, maxMemMB                         int
 	minSSIM                                float64
 	include                                string
 	exclude                                listFlag
@@ -65,6 +66,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	b(&c.showVersion, "version", "", "in phiên bản rồi thoát")
 	fs.IntVar(&c.jobs, "jobs", 0, "số worker (mặc định tự tính)")
 	fs.IntVar(&c.jobs, "j", 0, "viết tắt của --jobs")
+	fs.IntVar(&c.maxMemMB, "max-mem", 2048, "giới hạn bộ nhớ ước tính cho các ảnh chạy song song (MB)")
 	fs.Float64Var(&c.minSSIM, "min-ssim", 0.98, "ngưỡng chất lượng")
 	fs.StringVar(&c.include, "include", "", "chỉ xử lý các đuôi này, ví dụ png,jpg")
 	fs.Var(&c.exclude, "exclude", "bỏ qua đường dẫn khớp mẫu (lặp lại được)")
@@ -86,6 +88,9 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	}
 	if c.minSSIM <= 0 || c.minSSIM > 1 {
 		return c, errors.New("--min-ssim phải nằm trong (0, 1]")
+	}
+	if c.maxMemMB < 1 {
+		return c, errors.New("--max-mem phải >= 1 (MB)")
 	}
 	if c.jobs < 0 {
 		return c, errors.New("--jobs phải >= 1")
@@ -173,6 +178,8 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		workers = runtime.NumCPU()
 	}
 	runtime.GOMAXPROCS(workers)
+	budget := int64(c.maxMemMB) << 20
+	debug.SetMemoryLimit(budget + budget/4) // soft limit: GC works harder instead of letting RSS balloon
 	_ = LowerPriority()
 	say("Dùng %d worker.\n\n", workers)
 
@@ -203,6 +210,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	}()
 
 	var markWarn sync.Once
+	var outMu sync.Mutex
 	job := func(_ context.Context, it Item, acquire func(int64) func()) (res Result) {
 		start := time.Now()
 		res = Result{Item: it}
@@ -230,6 +238,12 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		}
 		release := acquire(int64(w) * int64(h))
 		defer release()
+		start = time.Now() // time spent waiting for memory is not compression time
+		if !c.quiet && !c.jsonOut && int64(w)*int64(h) >= 12_000_000 {
+			outMu.Lock()
+			fmt.Fprintf(stdout, "  … đang nén %s (%.1f MP, %s)\n", filepath.Base(it.Path), float64(w*h)/1e6, humanSize(int64(len(in))))
+			outMu.Unlock()
+		}
 		out, rep, err := core.Compress(in, opts)
 		res.Report = rep
 		if err != nil {
@@ -270,7 +284,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	begin := time.Now()
 	done := 0
 	showBar := term.IsTerminal(int(os.Stdout.Fd()))
-	for r := range Run(softCtx, scan.Items, workers, job) {
+	for r := range Run(softCtx, scan.Items, workers, budget, job) {
 		done++
 		rel, _ := filepath.Rel(root, r.Item.Path)
 		sum.add(rel, r)
@@ -282,11 +296,17 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 				b, _ := json.Marshal(map[string]any{"input": rel, "error": r.Err.Error()})
 				fmt.Fprintln(stdout, string(b))
 			} else {
-				b, _ := json.Marshal(rep)
+				b, _ := json.Marshal(struct {
+					core.Report
+					SavedBytes int   `json:"saved_bytes"`
+					DurationMs int64 `json:"duration_ms"`
+				}{rep, rep.SizeIn - rep.SizeOut, r.Duration.Milliseconds()})
 				fmt.Fprintln(stdout, string(b))
 			}
 		case !c.quiet:
+			outMu.Lock()
 			fmt.Fprintln(stdout, fileLine(done, len(scan.Items), rel, r, showBar))
+			outMu.Unlock()
 		}
 	}
 	sum.Elapsed = time.Since(begin)

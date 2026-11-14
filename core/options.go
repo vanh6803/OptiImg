@@ -10,7 +10,8 @@ const (
 	FormatJPEG Format = "jpeg"
 )
 
-// Limits bounds the input accepted by Compress.
+// Limits bounds the input accepted by Compress. A zero field means no limit;
+// memory is bounded by MaxPixels, not by the compressed file size.
 type Limits struct {
 	MaxBytes  int64
 	MaxPixels int64
@@ -28,5 +29,5 @@ type Options struct {
 
 // DefaultOptions returns the documented defaults.
 func DefaultOptions() Options {
-	return Options{MinSSIM: 0.98, Dither: 1.0, Limits: Limits{MaxBytes: 50 << 20, MaxPixels: 100_000_000}}
+	return Options{MinSSIM: 0.98, Dither: 1.0, Limits: Limits{MaxBytes: 0, MaxPixels: 100_000_000}}
 }

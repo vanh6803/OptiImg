@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"runtime"
 	"strings"
 	"time"
 
@@ -25,14 +26,6 @@ func humanSize(n int64) string {
 	return fmt.Sprintf("%d B", n)
 }
 
-func humanDuration(d time.Duration) string {
-	d = d.Round(time.Second)
-	if d < time.Minute {
-		return fmt.Sprintf("%ds", int(d.Seconds()))
-	}
-	return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
-}
-
 func bar(done, total, width int) string {
 	if total == 0 {
 		return strings.Repeat("░", width)
@@ -51,9 +44,16 @@ type Summary struct {
 	BytesOut   int64         `json:"bytes_out"`
 	Elapsed    time.Duration `json:"elapsed_ns"`
 	Errors     []string      `json:"-"`
+	Slowest    string        `json:"-"`
+	SlowestDur time.Duration `json:"-"`
+	CPUTime    time.Duration `json:"-"` // sum of per-file durations
 }
 
 func (s *Summary) add(rel string, r Result) {
+	s.CPUTime += r.Duration
+	if r.Duration > s.SlowestDur {
+		s.Slowest, s.SlowestDur = rel, r.Duration
+	}
 	switch {
 	case r.Err != nil:
 		s.Failed++
@@ -76,8 +76,16 @@ func (s *Summary) pct() float64 {
 }
 
 func (s *Summary) print(w io.Writer) {
+	var ms runtime.MemStats
+	runtime.ReadMemStats(&ms)
 	fmt.Fprintf(w, "\nXong: %d đã nén, %d đã tối ưu sẵn, %d lỗi\n", s.Compressed, s.Optimal, s.Failed)
-	fmt.Fprintf(w, "Tiết kiệm: %s → %s (%.1f%%) trong %s\n", humanSize(s.BytesIn), humanSize(s.BytesOut), s.pct(), humanDuration(s.Elapsed))
+	fmt.Fprintf(w, "Dung lượng: %s → %s  (đã giảm %s, %.1f%%)\n", humanSize(s.BytesIn), humanSize(s.BytesOut), humanSize(s.BytesIn-s.BytesOut), s.pct())
+	n := s.Compressed + s.Optimal + s.Failed
+	if n > 0 {
+		fmt.Fprintf(w, "Thời gian: %s tổng (%s trung bình/ảnh, tổng thời gian từng ảnh %s)\n", humanDuration(s.Elapsed), humanDuration(s.CPUTime/time.Duration(n)), humanDuration(s.CPUTime))
+		fmt.Fprintf(w, "Chậm nhất: %s (%s)\n", s.Slowest, humanDuration(s.SlowestDur))
+	}
+	fmt.Fprintf(w, "Bộ nhớ tiến trình đỉnh ≈ %s\n", humanSize(int64(ms.Sys)))
 	if len(s.Errors) > 0 {
 		fmt.Fprintln(w, "Lỗi:")
 		for _, e := range s.Errors {
@@ -90,9 +98,20 @@ func (s *Summary) printJSON(w io.Writer) {
 	b, _ := json.Marshal(map[string]any{"summary": map[string]any{
 		"compressed": s.Compressed, "already_optimal": s.Optimal, "failed": s.Failed,
 		"skipped_marked": s.SkippedOld, "bytes_in": s.BytesIn, "bytes_out": s.BytesOut,
-		"saved_pct": -s.pct(), "elapsed_seconds": s.Elapsed.Seconds(),
+		"saved_pct": -s.pct(), "saved_bytes": s.BytesIn - s.BytesOut, "elapsed_seconds": s.Elapsed.Seconds(),
 	}})
 	fmt.Fprintln(w, string(b))
+}
+
+func humanDuration(d time.Duration) string {
+	if d < 10*time.Second {
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	}
+	d = d.Round(time.Second)
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
 }
 
 func fileLine(done, total int, rel string, r Result, tty bool) string {
@@ -100,13 +119,15 @@ func fileLine(done, total int, rel string, r Result, tty bool) string {
 	if tty {
 		prefix += " " + bar(done, total, 16)
 	}
+	took := humanDuration(r.Duration)
 	if r.Err != nil {
-		return fmt.Sprintf("%s  %s  lỗi: %s", prefix, rel, viErr(r.Err))
+		return fmt.Sprintf("%s  %s  lỗi: %s  (%s)", prefix, rel, viErr(r.Err), took)
 	}
 	if r.Report.Skipped != "" {
-		return fmt.Sprintf("%s  %s  đã tối ưu sẵn (%s)", prefix, rel, humanSize(int64(r.Report.SizeIn)))
+		return fmt.Sprintf("%s  %s  đã tối ưu sẵn, giữ nguyên (%s)  %s", prefix, rel, humanSize(int64(r.Report.SizeIn)), took)
 	}
-	return fmt.Sprintf("%s  %s  %s → %s  -%.0f%%", prefix, rel, humanSize(int64(r.Report.SizeIn)), humanSize(int64(r.Report.SizeOut)), r.Report.SavedPct)
+	saved := int64(r.Report.SizeIn - r.Report.SizeOut)
+	return fmt.Sprintf("%s  %s  %s → %s  (giảm %s, -%.0f%%)  %s", prefix, rel, humanSize(int64(r.Report.SizeIn)), humanSize(int64(r.Report.SizeOut)), humanSize(saved), r.Report.SavedPct, took)
 }
 
 // viErr renders a Compress error in Vietnamese, as in docs/cli-flow.md §10.
@@ -115,7 +136,7 @@ func viErr(err error) string {
 	case errors.Is(err, core.ErrUnsupportedFormat):
 		return "định dạng không được hỗ trợ (chỉ PNG và JPEG)"
 	case errors.Is(err, core.ErrTooLarge):
-		return "vượt giới hạn kích thước (50 MB hoặc 100 MP)"
+		return "vượt giới hạn 100 MP"
 	case errors.Is(err, core.ErrAnimated):
 		return "PNG động (APNG), giữ nguyên file"
 	case errors.Is(err, core.ErrCorrupt):

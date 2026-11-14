@@ -33,6 +33,25 @@ func remapDither(img *image.NRGBA, pal []col, transparent int, strength float32)
 	}
 	w, h := img.Bounds().Dx(), img.Bounds().Dy()
 	idx := make([]uint8, w*h)
+	cache := make(map[uint32]uint8, 1<<14)
+	// nearestCached looks up the palette entry for a 6-bit-per-channel bucket
+	// (alpha exact): brute force only once per bucket instead of per pixel.
+	nearestCached := func(c col) int {
+		r, g, b, a := uint32(c[0])>>2, uint32(c[1])>>2, uint32(c[2])>>2, uint32(c[3]+0.5)
+		k := r<<20 | g<<14 | b<<8 | a
+		if v, ok := cache[k]; ok {
+			return int(v)
+		}
+		ctr := col{float32(r*4 + 2), float32(g*4 + 2), float32(b*4 + 2), float32(a)}
+		for i := 0; i < 3; i++ {
+			if ctr[i] > ctr[3] {
+				ctr[i] = ctr[3]
+			}
+		}
+		i, _ := nearest(pal, ctr)
+		cache[k] = uint8(i)
+		return i
+	}
 	cur := make([]col, w+2)
 	next := make([]col, w+2)
 	for y := 0; y < h; y++ {
@@ -57,7 +76,7 @@ func remapDither(img *image.NRGBA, pal []col, transparent int, strength float32)
 					c[k] = c[3]
 				}
 			}
-			i, _ := nearest(pal, c)
+			i := nearestCached(c)
 			idx[p] = uint8(i)
 			var err col
 			for k := 0; k < 4; k++ {

@@ -28,6 +28,7 @@ optiimg [path] [flags]
       --no-recursive   chỉ quét thư mục hiện tại, không vào thư mục con
   -j, --jobs N         số worker (mặc định: tự tính, xem mục 6)
       --min-ssim S     ngưỡng chất lượng (mặc định 0.98)
+      --max-mem MB     ngân sách bộ nhớ cho các ảnh chạy song song (mặc định 2048)
       --lossless       PNG không giảm màu
       --force          nén lại cả file đã được đánh dấu là đã nén
       --keep-mtime     giữ thời gian sửa đổi gốc của file
@@ -130,11 +131,10 @@ workers = clamp(NumCPU / 2, 1, 4)
 
 Ảnh lớn ngốn RAM (ảnh 50 MP ở dạng RGBA ≈ 200 MB, nhân thêm bộ đệm khi nén).
 
-- Mỗi ảnh “tốn” một số **token bộ nhớ** tỉ lệ với số pixel (đọc từ header trước khi giải mã):
-  - ≤ 12 MP: 1 token.
-  - 12–40 MP: 2 token.
-  - > 40 MP: chiếm toàn bộ token, tức là chạy một mình.
-- Tổng token = `workers`. Một worker phải lấy đủ token mới bắt đầu nén.
+- Mỗi ảnh “tốn” **bộ nhớ ước tính = số pixel × 50 byte** (đọc từ header trước khi giải mã; đo thực tế: jpegli ≈ 45 B/pixel).
+- Ngân sách tổng mặc định **2 GB** (`--max-mem MB`). Một worker phải lấy đủ ngân sách mới bắt đầu nén;
+  ảnh nào cần hơn cả ngân sách (ví dụ 50 MP ≈ 2,5 GB) thì chiếm toàn bộ và chạy một mình.
+- Tiến trình đặt `debug.SetMemoryLimit(ngân sách × 1,25)` để GC làm việc tích cực thay vì để RSS phình ra.
 - Kết quả: nhiều ảnh nhỏ chạy song song, ảnh lớn chạy lần lượt.
 
 ### 6.4 Đọc và ghi đĩa

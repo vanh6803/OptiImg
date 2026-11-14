@@ -149,16 +149,16 @@ func Quantize(img *image.NRGBA, o Options) (*image.Paletted, Stats) {
 	var s float64
 	for attempt := 0; ; attempt++ {
 		pal, tr := buildPalette(bins, hasT, n)
-		out = paletted(img, pal, remapDither(img, pal, tr, float32(o.Dither)))
+		// The plain remap is cheap and, on SSIM/PSNR, nearly always the better
+		// of the two. Dithering (7× slower, noisier) is only worth trying when
+		// the plain result already meets the gate, and is kept only if it does too.
+		out = paletted(img, pal, remapPlain(img, pal, tr))
 		s = metric.SSIM(img, out)
 		ok := o.meets(s, psnrIf(o, img, out))
-		if !ok && o.Dither > 0 {
-			// Dithering adds noise that SSIM punishes. If it misses the gate,
-			// fall back to the plain remap when that scores higher.
-			plain := paletted(img, pal, remapPlain(img, pal, tr))
-			if ps := metric.SSIM(img, plain); ps > s {
-				out, s = plain, ps
-				ok = o.meets(s, psnrIf(o, img, out))
+		if ok && o.Dither > 0 {
+			d := paletted(img, pal, remapDither(img, pal, tr, float32(o.Dither)))
+			if ds := metric.SSIM(img, d); o.meets(ds, psnrIf(o, img, d)) {
+				out, s = d, ds
 			}
 		}
 		if ok || attempt == 2 || n >= o.MaxColors {

@@ -168,7 +168,9 @@ flowchart TD
 
 ---
 
-## 5. Worker pool và token bộ nhớ
+## 5. Worker pool và ngân sách bộ nhớ
+
+> Cập nhật 2026-11-14: thay token 1/2/all bằng ngân sách byte (pixel × 50 B, mặc định 2 GB). Sơ đồ dưới giữ nguyên ý tưởng: ảnh lớn chiếm hết, ảnh nhỏ chạy song song.
 
 ### 5.1 Cấu trúc
 
@@ -412,7 +414,7 @@ flowchart TD
     C -->|có| JPG[FormatJPEG]
     C -->|không| U([ErrUnsupportedFormat])
 
-    PNG & JPG --> L1{"len > MaxBytes (50 MB)?"}
+    PNG & JPG --> L1{"len > MaxBytes (mặc định 0 = không giới hạn)?"}
     L1 -->|có| T([ErrTooLarge])
     L1 -->|không| L2["image.DecodeConfig → w, h<br/>(chỉ đọc header)"]
     L2 -->|lỗi| CR([ErrCorrupt])
@@ -683,7 +685,7 @@ classDiagram
         Limits Limits
     }
     class Limits {
-        int64 MaxBytes = 50 MB
+        int64 MaxBytes = 0 (không giới hạn)
         int64 MaxPixels = 100 MP
     }
     class Report {

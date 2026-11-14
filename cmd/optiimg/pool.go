@@ -22,19 +22,16 @@ func DefaultWorkers(numCPU int) int {
 	return w
 }
 
-// TokensFor returns the memory tokens an image of the given size needs.
-func TokensFor(pixels int64, total int) int {
-	switch {
-	case pixels <= 12_000_000:
-		return 1
-	case pixels <= 40_000_000:
-		if total < 2 {
-			return total
-		}
-		return 2
-	}
-	return total
-}
+// bytesPerPixel estimates peak memory per pixel while compressing (jpegli
+// needs ≈ 45 B/px, the PNG path ≈ 30 B/px); measured on 4K and 8K photos.
+const bytesPerPixel = 50
+
+// DefaultMemBudget is the default total memory (bytes) the pool lets
+// concurrent jobs claim.
+const DefaultMemBudget int64 = 2 << 30
+
+// MemFor returns the estimated peak memory for an image of the given size.
+func MemFor(pixels int64) int64 { return pixels * bytesPerPixel }
 
 // Result is the outcome of one job.
 type Result struct {
@@ -44,19 +41,26 @@ type Result struct {
 	Duration time.Duration
 }
 
-// Job processes one item. acquire blocks until enough memory tokens are free
-// and returns the release function.
+// Job processes one item. acquire blocks until enough of the memory budget is
+// free and returns the release function.
 type Job func(ctx context.Context, it Item, acquire func(pixels int64) (release func())) Result
 
-// Run feeds items to a bounded pool. Cancelling ctx stops starting new work;
+// Run feeds items to a bounded pool: at most `workers` jobs at once, and their
+// estimated memory together stays within budget. Cancelling ctx stops starting new work;
 // jobs already running finish. The result channel closes when all is done.
-func Run(ctx context.Context, items []Item, workers int, job Job) <-chan Result {
+func Run(ctx context.Context, items []Item, workers int, budget int64, job Job) <-chan Result {
 	if workers < 1 {
 		workers = 1
 	}
-	sem := semaphore.NewWeighted(int64(workers))
+	if budget < 1 {
+		budget = DefaultMemBudget
+	}
+	sem := semaphore.NewWeighted(budget)
 	acquire := func(pixels int64) func() {
-		n := int64(TokensFor(pixels, workers))
+		n := MemFor(pixels)
+		if n > budget {
+			n = budget // too big to share: runs alone
+		}
 		_ = sem.Acquire(context.Background(), n)
 		return func() { sem.Release(n) }
 	}

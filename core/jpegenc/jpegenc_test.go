@@ -122,3 +122,25 @@ func TestEncodeAutoMeetsSSIM(t *testing.T) {
 	}
 	t.Logf("q=%d ssim=%.4f size=%d", q, ssim, len(out))
 }
+
+func TestSampleMosaic(t *testing.T) {
+	img := loadPhoto(t) // 1200×652
+	s := Sample(img, 256)
+	if s.Bounds().Dx() != 512 || s.Bounds().Dy() != 512 {
+		t.Fatalf("size %v", s.Bounds())
+	}
+	// top-left tile must equal the source block at the first quarter point
+	x0, y0 := (1200/4-128)&^15, (652/4-128)&^15
+	r1, g1, b1, _ := img.At(x0+5, y0+7).RGBA()
+	r2, g2, b2, _ := s.At(5, 7).RGBA()
+	if absDiff(r1, r2) > 400 || absDiff(g1, g2) > 400 || absDiff(b1, b2) > 400 {
+		t.Error("tile content mismatch")
+	}
+}
+
+func absDiff(a, b uint32) uint32 {
+	if a > b {
+		return a - b
+	}
+	return b - a
+}
