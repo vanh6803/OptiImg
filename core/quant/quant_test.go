@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"optiimg/core"
 	"optiimg/core/metric"
 )
 
@@ -23,7 +22,7 @@ func loadNRGBA(t testing.TB, name string) *image.NRGBA {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return core.ToNRGBA(img)
+	return toNRGBA(img)
 }
 
 func opts() Options { return Options{MaxColors: 256, MinSSIM: 0.98, Dither: 1.0} }
@@ -151,7 +150,7 @@ func TestQuantize16BitAndGray(t *testing.T) {
 		}
 	}
 	for _, src := range []image.Image{g, n64} {
-		_, st := Quantize(core.ToNRGBA(src), opts())
+		_, st := Quantize(toNRGBA(src), opts())
 		if st.SSIM < 0.98 {
 			t.Errorf("%T ssim %v", src, st.SSIM)
 		}
@@ -172,4 +171,15 @@ func BenchmarkQuantizePhoto(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		Quantize(img, opts())
 	}
+}
+
+func toNRGBA(src image.Image) *image.NRGBA {
+	b := src.Bounds()
+	out := image.NewNRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	for y := 0; y < b.Dy(); y++ {
+		for x := 0; x < b.Dx(); x++ {
+			out.Set(x, y, src.At(b.Min.X+x, b.Min.Y+y))
+		}
+	}
+	return out
 }

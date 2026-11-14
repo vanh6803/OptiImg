@@ -55,17 +55,19 @@ func TestCheckLimits(t *testing.T) {
 	}
 }
 
-func TestIsAnimatedPNG(t *testing.T) {
-	b := pngBytes(t, 4, 4)
-	// insert acTL (num_frames=2, num_plays=0) right after IHDR (8 sig + 25 IHDR)
+// addACTL inserts a valid acTL chunk right after IHDR.
+func addACTL(b []byte) []byte {
 	data := make([]byte, 8)
 	binary.BigEndian.PutUint32(data, 2)
-	chunk := make([]byte, 0, 20)
-	chunk = binary.BigEndian.AppendUint32(chunk, 8)
+	chunk := binary.BigEndian.AppendUint32(nil, 8)
 	chunk = append(chunk, "acTL"...)
 	chunk = append(chunk, data...)
 	chunk = binary.BigEndian.AppendUint32(chunk, crc32.ChecksumIEEE(append([]byte("acTL"), data...)))
-	anim := append(append(append([]byte{}, b[:33]...), chunk...), b[33:]...)
+	return append(append(append([]byte{}, b[:33]...), chunk...), b[33:]...)
+}
+
+func TestIsAnimatedPNG(t *testing.T) {
+	anim := addACTL(pngBytes(t, 4, 4))
 	if !IsAnimatedPNG(anim) {
 		t.Error("APNG not detected")
 	}

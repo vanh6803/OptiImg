@@ -13,7 +13,12 @@ import (
 type Options struct {
 	MaxColors int
 	MinSSIM   float64
+	MinPSNR   float64 // optional second gate in dB; 0 = off
 	Dither    float64
+}
+
+func (o Options) meets(ssim, psnr float64) bool {
+	return ssim >= o.MinSSIM && (o.MinPSNR <= 0 || psnr >= o.MinPSNR)
 }
 
 // Stats describes the result.
@@ -132,7 +137,8 @@ func Quantize(img *image.NRGBA, o Options) (*image.Paletted, Stats) {
 		mid := (lo + hi) / 2
 		pal, tr := buildPalette(bins, hasT, mid)
 		idx := remapPlain(thumb, pal, tr)
-		if metric.SSIM(thumb, paletted(thumb, pal, idx)) >= o.MinSSIM {
+		tp := paletted(thumb, pal, idx)
+		if o.meets(metric.SSIM(thumb, tp), psnrIf(o, thumb, tp)) {
 			hi = mid
 		} else {
 			lo = mid + 1
@@ -145,7 +151,17 @@ func Quantize(img *image.NRGBA, o Options) (*image.Paletted, Stats) {
 		pal, tr := buildPalette(bins, hasT, n)
 		out = paletted(img, pal, remapDither(img, pal, tr, float32(o.Dither)))
 		s = metric.SSIM(img, out)
-		if s >= o.MinSSIM || attempt == 2 || n >= o.MaxColors {
+		ok := o.meets(s, psnrIf(o, img, out))
+		if !ok && o.Dither > 0 {
+			// Dithering adds noise that SSIM punishes. If it misses the gate,
+			// fall back to the plain remap when that scores higher.
+			plain := paletted(img, pal, remapPlain(img, pal, tr))
+			if ps := metric.SSIM(img, plain); ps > s {
+				out, s = plain, ps
+				ok = o.meets(s, psnrIf(o, img, out))
+			}
+		}
+		if ok || attempt == 2 || n >= o.MaxColors {
 			break
 		}
 		n = n * 3 / 2
@@ -221,4 +237,11 @@ func exact(img *image.NRGBA, n int) (*image.Paletted, Stats) {
 	out := image.NewPaletted(img.Bounds(), cp)
 	copy(out.Pix, idx)
 	return out, Stats{Colors: len(cp), SSIM: 1, Lossless: true}
+}
+
+func psnrIf(o Options, a, b image.Image) float64 {
+	if o.MinPSNR <= 0 {
+		return 0
+	}
+	return metric.PSNR(a, b)
 }

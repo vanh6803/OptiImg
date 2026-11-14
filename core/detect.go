@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
-	_ "image/jpeg" // register decoders for DecodeConfig
-	_ "image/png"
+	"image/jpeg"
+	"image/png"
 )
 
 var pngMagic = []byte("\x89PNG\r\n\x1a\n")
@@ -27,7 +27,18 @@ func CheckLimits(b []byte, f Format, l Limits) (w, h int, err error) {
 	if l.MaxBytes > 0 && int64(len(b)) > l.MaxBytes {
 		return 0, 0, fmt.Errorf("%w: %d bytes > %d", ErrTooLarge, len(b), l.MaxBytes)
 	}
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(b))
+	// Call the standard decoders explicitly: importing jpegli registers a
+	// second "jpeg" format whose stricter parser can reject or panic on
+	// otherwise valid files.
+	var cfg image.Config
+	switch f {
+	case FormatPNG:
+		cfg, err = png.DecodeConfig(bytes.NewReader(b))
+	case FormatJPEG:
+		cfg, err = jpeg.DecodeConfig(bytes.NewReader(b))
+	default:
+		return 0, 0, ErrUnsupportedFormat
+	}
 	if err != nil {
 		return 0, 0, fmt.Errorf("%w: %v", ErrCorrupt, err)
 	}

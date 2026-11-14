@@ -21,7 +21,8 @@
 - Metadata: xóa hết. Giữ duy nhất JFIF (APP0) với JPEG (cho phép không có APP0).
 - Giới hạn mặc định: file ≤ 50 MB, ảnh ≤ 100 MP; kiểm tra từ header trước khi giải mã.
 - `minSSIM` mặc định `0.98`; dither mặc định `1.0`; PNG tối đa `256` màu.
-- JPEG: q auto trong `[55, 85]`, progressive, 4:2:0, tối ưu Huffman.
+- JPEG: q auto trong `[55, 80]` (đã hạ từ 85 ở Task 7: ảnh tham chiếu không đạt SSIM 0,98 ngay cả ở q85 và sẽ vượt ngưỡng 36%), progressive, 4:2:0, tối ưu Huffman.
+- Palette PNG: N phải thỏa SSIM ≥ `minSSIM` **và** PSNR ≥ 45 dB (Task 4/7); dither bị bỏ khi làm SSIM tệ hơn bản không dither.
 - Trọng số khoảng cách màu: `0.50·ΔR² + 1.00·ΔG² + 0.45·ΔB² + 0.625·ΔA²` (premultiplied).
 - SSIM: luma `Y = 0.299R + 0.587G + 0.114B`, cửa sổ 8×8 bước 4, `C1=(0.01·255)²`, `C2=(0.03·255)²`; ảnh có alpha đo trên nền trắng và nền đen, lấy giá trị thấp hơn.
 - Worker mặc định `clamp(NumCPU/2, 1, 4)`; `--jobs` tối đa NumCPU.
@@ -294,7 +295,7 @@ func TestLosslessGray(t *testing.T)          // NRGBA toàn xám đục -> *imag
 func TestEncodeProgressive(t *testing.T)    // output có marker SOF2 (FF C2); không có APP1..APP15
 func TestEncodeSubsampling420(t *testing.T) // thành phần Y có sampling (2,2), Cb/Cr (1,1)
 func TestEstimateQuality(t *testing.T)      // image/jpeg q=95 -> 93..97; q=70 -> 67..73; dữ liệu rác -> ok=false
-func TestEncodeAutoMeetsSSIM(t *testing.T)  // testdata/photo.jpg: q trong [55,85], ssim >= 0.98, SSIM tính lại khớp ±1e-6
+func TestEncodeAutoMeetsSSIM(t *testing.T)  // testdata/photo.jpg: q trong [55,85], ssim khớp SSIM tính lại ±1e-6; ssim >= 0.98 hoặc q == hi (xem ruling Task 6)
 ```
 
 - [ ] **Step 3:** `go test ./core/jpegenc/` → FAIL.
@@ -319,7 +320,7 @@ func TestEncodeAutoMeetsSSIM(t *testing.T)  // testdata/photo.jpg: q trong [55,8
 
 Luồng: `Detect` → `CheckLimits` → `IsAnimatedPNG` (→ `ErrAnimated`) → `Decode` → `WhiteBG`? `FlattenWhite` → nhánh:
 - PNG: `o.Lossless` → `pngenc.Lossless`; ngược lại `quant.Quantize` → `pngenc.Encode`.
-- JPEG: `o.Quality > 0` → `jpegenc.Encode`; ngược lại `EncodeAuto(img, 55, 85, o.MinSSIM)`; nếu `EstimateQuality(in)` ≤ q tìm được → giữ input (`already_optimal`).
+- JPEG: `o.Quality > 0` → `jpegenc.Encode`; ngược lại `EncodeAuto(img, 55, 80, o.MinSSIM)`; nếu `EstimateQuality(in)` ≤ q tìm được → giữ input (`already_optimal`).
 - Chốt chặn: `len(out) >= len(in)` → trả input, `Skipped = already_optimal`.
 - Nếu input có ICC (PNG chunk `iCCP`, JPEG APP2 `ICC_PROFILE`) → thêm cảnh báo `icc_profile_dropped`.
 - Điền `SSIM`, `PSNR` (giữa ảnh đã chuẩn hóa và output giải mã lại).

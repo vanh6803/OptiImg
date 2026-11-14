@@ -145,6 +145,9 @@ N = lo
 - `minSSIM` mặc định **0,98** (tùy chỉnh bằng `--min-ssim`).
 - Nếu ngay cả N = 256 cũng không đạt → vẫn dùng 256 (giống dịch vụ tham chiếu:
   ảnh chụp luôn ra palette 256 màu, chấp nhận PSNR ~33–34 dB).
+- **Cổng PSNR thứ hai (đã chốt khi cài đặt):** SSIM đo trên độ sáng nên “mù” với sai lệch màu/viền alpha
+  (logo đỏ/xanh 4 màu vẫn đạt SSIM 0,98 nhưng PSNR chỉ 30 dB). Vì vậy N phải thỏa **cả** SSIM ≥ `minSSIM`
+  **và** PSNR ≥ 45 dB; không đạt thì tăng N (ảnh chụp không bao giờ đạt → 256 màu, như dịch vụ tham chiếu).
 - Có thể đo SSIM trên ảnh thu nhỏ (cạnh dài ≤ 512 px) để tăng tốc; kết quả cuối vẫn
   tính trên ảnh đầy đủ.
 
@@ -161,6 +164,8 @@ N = lo
 - **Dither thích ứng** (cải tiến, làm sau): giảm dither ở vùng phẳng (phương sai cục bộ thấp)
   để tránh hạt nhiễu thừa, giữ dither ở vùng gradient.
 - Pixel `a == 0` luôn gán vào màu trong suốt, không lan sai số.
+- **Dither chỉ giữ khi không làm tụt chất lượng:** dither thêm nhiễu mà SSIM phạt (ảnh chụp: 0,954 có dither so với
+  0,982 không dither, và file to hơn 17%). Nếu bản dither không đạt ngưỡng mà bản không dither có SSIM cao hơn → dùng bản không dither.
 - Sau khi dither, đo lại SSIM; nếu tụt dưới ngưỡng thì tăng N thêm một bậc và làm lại
   (tối đa 2 lần).
 
@@ -204,7 +209,7 @@ Mục tiêu: mã hóa lại với chất lượng thấp nhất còn đạt ngư
 ### 3.2 Chọn chất lượng q
 
 - Chế độ `--quality N`: dùng N cố định.
-- Mặc định `auto`: chia đôi trong khoảng [55, 85]:
+- Mặc định `auto`: chia đôi trong khoảng [55, 80]:
 
   ```
   lo = 55, hi = 85
@@ -317,7 +322,7 @@ file trên đĩa. Mọi việc đọc, ghi, ghi đè đều do lớp CLI đảm 
 | PNG số màu tối đa | 256 |
 | PNG dither | 1.0 |
 | PNG deflate | mức cao nhất, zopfli tắt |
-| JPEG quality | auto trong [55, 85] |
+| JPEG quality | auto trong [55, 80] |
 | JPEG progressive | bật |
 | JPEG lấy mẫu màu | 4:2:0 |
 | Metadata | xóa hết |

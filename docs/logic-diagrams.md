@@ -383,7 +383,7 @@ flowchart TD
 
     G -->|JPEG| J{opts.Quality > 0?}
     J -->|có| J1["out = jpegenc.Encode(img, Quality)"]
-    J -->|không| J2["out, q, s = jpegenc.EncodeAuto(img, 55, 85, MinSSIM)"]
+    J -->|không| J2["out, q, s = jpegenc.EncodeAuto(img, 55, 80, MinSSIM)"]
     J2 --> J3{"EstimateQuality(in) ≤ q?"}
     J3 -->|có| KEEP
     J3 -->|không| Z
@@ -613,7 +613,7 @@ flowchart TD
     F -->|không| H["lo = mid"] --> B
 ```
 
-Khoảng 4–5 lần mã hóa. Nếu ngay cả q = 85 không đạt → vẫn trả q = 85 (giới hạn trên).
+Khoảng 4–5 lần mã hóa. Nếu ngay cả q = 80 không đạt → vẫn trả q = 80 (giới hạn trên).
 
 ### 20.2 Encode(img, q)
 
