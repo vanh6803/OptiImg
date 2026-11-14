@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 CI tests, builds, creates the `vx.y.z` tag and the GitHub Release, using that section as the release notes.
 See [docs/release.md](docs/release.md).
 
+## [Unreleased]
+
+### Added
+- `--lang vi|en` (and `OPTIIMG_LANG`) to choose the language of CLI messages, including usage and errors.
+
 ## [0.1.0] - 2026-11-14
 
 First release: offline PNG and JPEG compression from the command line, overwriting files in place.
@@ -28,4 +33,4 @@ First release: offline PNG and JPEG compression from the command line, overwriti
 - Only PNG and JPEG are supported; RAW, WebP, AVIF and JXL are not.
 - A 50 MP image needs about 2.5 GB of RAM when compressing JPEG (jpegli).
 - The binary is unsigned: on macOS run `xattr -d com.apple.quarantine ./optiimg` on first launch.
-- Runtime messages are in Vietnamese.
+- Runtime messages are in Vietnamese only (fixed in the next release with `--lang`).

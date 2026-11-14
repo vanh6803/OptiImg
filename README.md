@@ -27,7 +27,7 @@ Time: 23s total (2.5s average per image)
 > **Heads-up:** images are **overwritten in place and this cannot be undone**. Run `optiimg -n` first to preview, and back
 > up anything important before your first run.
 >
-> The program's runtime messages are currently in Vietnamese; the sample above is translated for readability.
+> Messages are in Vietnamese by default; use `--lang en` (or `OPTIIMG_LANG=en`) for English, as in the sample above.
 
 ## Install
 
@@ -94,6 +94,7 @@ optiimg                    # 3. compress
 | `--keep-mtime` | Keep each file's original modification time. |
 | `--include png,jpg` | Only process these extensions. |
 | `--exclude PATTERN` | Skip paths matching the pattern, e.g. `--exclude 'raw/*'` (repeatable). |
+| `--lang vi\|en` | Message language (default `vi`; or set `OPTIIMG_LANG=en`). |
 | `--json` | One JSON line per file, plus a final summary line. Handy for scripts. |
 | `-q`, `--quiet` | Print only the final summary. |
 

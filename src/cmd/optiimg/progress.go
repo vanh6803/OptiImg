@@ -78,16 +78,16 @@ func (s *Summary) pct() float64 {
 func (s *Summary) print(w io.Writer) {
 	var ms runtime.MemStats
 	runtime.ReadMemStats(&ms)
-	fmt.Fprintf(w, "\nXong: %d đã nén, %d đã tối ưu sẵn, %d lỗi\n", s.Compressed, s.Optimal, s.Failed)
-	fmt.Fprintf(w, "Dung lượng: %s → %s  (đã giảm %s, %.1f%%)\n", humanSize(s.BytesIn), humanSize(s.BytesOut), humanSize(s.BytesIn-s.BytesOut), s.pct())
+	fmt.Fprint(w, tr("sum.done", s.Compressed, s.Optimal, s.Failed))
+	fmt.Fprint(w, tr("sum.size", humanSize(s.BytesIn), humanSize(s.BytesOut), humanSize(s.BytesIn-s.BytesOut), s.pct()))
 	n := s.Compressed + s.Optimal + s.Failed
 	if n > 0 {
-		fmt.Fprintf(w, "Thời gian: %s tổng (%s trung bình/ảnh, tổng thời gian từng ảnh %s)\n", humanDuration(s.Elapsed), humanDuration(s.CPUTime/time.Duration(n)), humanDuration(s.CPUTime))
-		fmt.Fprintf(w, "Chậm nhất: %s (%s)\n", s.Slowest, humanDuration(s.SlowestDur))
+		fmt.Fprint(w, tr("sum.time", humanDuration(s.Elapsed), humanDuration(s.CPUTime/time.Duration(n)), humanDuration(s.CPUTime)))
+		fmt.Fprint(w, tr("sum.slowest", s.Slowest, humanDuration(s.SlowestDur)))
 	}
-	fmt.Fprintf(w, "Bộ nhớ tiến trình đỉnh ≈ %s\n", humanSize(int64(ms.Sys)))
+	fmt.Fprint(w, tr("sum.mem", humanSize(int64(ms.Sys))))
 	if len(s.Errors) > 0 {
-		fmt.Fprintln(w, "Lỗi:")
+		fmt.Fprintln(w, tr("sum.errors"))
 		for _, e := range s.Errors {
 			fmt.Fprintln(w, e)
 		}
@@ -121,27 +121,27 @@ func fileLine(done, total int, rel string, r Result, tty bool) string {
 	}
 	took := humanDuration(r.Duration)
 	if r.Err != nil {
-		return fmt.Sprintf("%s  %s  lỗi: %s  (%s)", prefix, rel, viErr(r.Err), took)
+		return tr("line.err", prefix, rel, viErr(r.Err), took)
 	}
 	if r.Report.Skipped != "" {
-		return fmt.Sprintf("%s  %s  đã tối ưu sẵn, giữ nguyên (%s)  %s", prefix, rel, humanSize(int64(r.Report.SizeIn)), took)
+		return tr("line.optimal", prefix, rel, humanSize(int64(r.Report.SizeIn)), took)
 	}
 	saved := int64(r.Report.SizeIn - r.Report.SizeOut)
-	return fmt.Sprintf("%s  %s  %s → %s  (giảm %s, -%.0f%%)  %s", prefix, rel, humanSize(int64(r.Report.SizeIn)), humanSize(int64(r.Report.SizeOut)), humanSize(saved), r.Report.SavedPct, took)
+	return tr("line.ok", prefix, rel, humanSize(int64(r.Report.SizeIn)), humanSize(int64(r.Report.SizeOut)), humanSize(saved), r.Report.SavedPct, took)
 }
 
 // viErr renders a Compress error in Vietnamese, as in docs/cli-flow.md §10.
 func viErr(err error) string {
 	switch {
 	case errors.Is(err, core.ErrUnsupportedFormat):
-		return "định dạng không được hỗ trợ (chỉ PNG và JPEG)"
+		return tr("e.unsupported")
 	case errors.Is(err, core.ErrTooLarge):
-		return "vượt giới hạn 100 MP"
+		return tr("e.toolarge")
 	case errors.Is(err, core.ErrAnimated):
-		return "PNG động (APNG), giữ nguyên file"
+		return tr("e.animated")
 	case errors.Is(err, core.ErrCorrupt):
 		detail := strings.TrimPrefix(err.Error(), core.ErrCorrupt.Error()+": ")
-		return "giải mã thất bại: " + detail
+		return tr("e.corrupt", detail)
 	}
 	return err.Error()
 }

@@ -20,7 +20,7 @@ func Confirm(in io.Reader, out io.Writer, isTTY, yes bool) (bool, error) {
 	if !isTTY {
 		return false, ErrNeedYes
 	}
-	fmt.Fprint(out, "Ghi đè trực tiếp lên file gốc, không hoàn tác được. Tiếp tục? [y/N] ")
+	fmt.Fprint(out, tr("confirm"))
 	line, _ := bufio.NewReader(in).ReadString('\n')
 	switch strings.ToLower(strings.TrimSpace(line)) {
 	case "y", "yes":

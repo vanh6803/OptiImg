@@ -91,6 +91,7 @@ optiimg                 # 3. nén
 | `--keep-mtime` | Giữ nguyên thời gian sửa đổi của file. |
 | `--include png,jpg` | Chỉ xử lý các đuôi này. |
 | `--exclude MẪU` | Bỏ qua đường dẫn khớp mẫu, ví dụ `--exclude 'raw/*'` (dùng nhiều lần được). |
+| `--lang vi\|en` | Ngôn ngữ thông báo (mặc định `vi`; hoặc đặt `OPTIIMG_LANG=en`). |
 | `--json` | In mỗi file một dòng JSON, dòng cuối là tổng kết. Tiện cho script. |
 | `-q`, `--quiet` | Chỉ in tổng kết cuối. |
 

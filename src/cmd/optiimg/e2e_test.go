@@ -258,3 +258,39 @@ func TestE2ERawIgnoredByDefault(t *testing.T) {
 		t.Errorf("exit %d\n%s", code, out)
 	}
 }
+
+func TestE2EEnglishMessages(t *testing.T) {
+	dir := fixtures(t)
+	b, _ := os.ReadFile("../../../testdata/photo.png")
+	write(t, dir, "broken.png", b[:len(b)/2], 0o644)
+	out, code := runBin(t, dir, nil, "-y", "--lang", "en")
+	if code != 1 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	for _, want := range []string{"Found 4 images", "saved ", "Done: 3 compressed", "Size:", "Time:", "Slowest:", "decode failed"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("English output lacks %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "Tìm thấy") {
+		t.Error("Vietnamese text leaked into English output")
+	}
+}
+
+func TestE2ELangEnv(t *testing.T) {
+	dir := fixtures(t)
+	cmd := exec.Command(binPath, "-n")
+	cmd.Dir = dir
+	cmd.Env = append(os.Environ(), "OPTIIMG_LANG=en")
+	out, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "Found 3 images") {
+		t.Errorf("err %v\n%s", err, out)
+	}
+}
+
+func TestE2EBadLang(t *testing.T) {
+	_, code := runBin(t, fixtures(t), nil, "-n", "--lang", "fr")
+	if code != 2 {
+		t.Errorf("exit %d want 2", code)
+	}
+}

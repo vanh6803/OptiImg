@@ -37,7 +37,7 @@ type config struct {
 	jsonOut, quiet, showVersion            bool
 	jobs, maxMemMB                         int
 	minSSIM                                float64
-	include                                string
+	include, lang                          string
 	exclude                                listFlag
 }
 
@@ -46,30 +46,31 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	fs := flag.NewFlagSet("optiimg", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.Usage = func() {
-		fmt.Fprint(stderr, "Cách dùng: optiimg [path] [flags]\n\nNén ảnh PNG/JPEG trong thư mục (mặc định \".\") và ghi đè tại chỗ.\n\n")
+		fmt.Fprint(stderr, tr("usage"))
 		fs.PrintDefaults()
 	}
 	b := func(p *bool, long, short, usage string) {
 		fs.BoolVar(p, long, false, usage)
 		if short != "" {
-			fs.BoolVar(p, short, false, "viết tắt của --"+long)
+			fs.BoolVar(p, short, false, tr("alias", long))
 		}
 	}
-	b(&c.yes, "yes", "y", "bỏ qua bước hỏi xác nhận")
-	b(&c.dry, "dry-run", "n", "chỉ quét và liệt kê, không ghi gì")
-	b(&c.noRec, "no-recursive", "", "không vào thư mục con")
-	b(&c.lossless, "lossless", "", "PNG không giảm màu")
-	b(&c.force, "force", "", "nén lại cả file đã được đánh dấu")
-	b(&c.keep, "keep-mtime", "", "giữ thời gian sửa đổi gốc")
-	b(&c.jsonOut, "json", "", "in mỗi file một dòng JSON")
-	b(&c.quiet, "quiet", "q", "chỉ in tổng kết cuối")
-	b(&c.showVersion, "version", "", "in phiên bản rồi thoát")
-	fs.IntVar(&c.jobs, "jobs", 0, "số worker (mặc định tự tính)")
-	fs.IntVar(&c.jobs, "j", 0, "viết tắt của --jobs")
-	fs.IntVar(&c.maxMemMB, "max-mem", 2048, "giới hạn bộ nhớ ước tính cho các ảnh chạy song song (MB)")
-	fs.Float64Var(&c.minSSIM, "min-ssim", 0.98, "ngưỡng chất lượng")
-	fs.StringVar(&c.include, "include", "", "chỉ xử lý các đuôi này, ví dụ png,jpg")
-	fs.Var(&c.exclude, "exclude", "bỏ qua đường dẫn khớp mẫu (lặp lại được)")
+	b(&c.yes, "yes", "y", tr("f.yes"))
+	b(&c.dry, "dry-run", "n", tr("f.dry"))
+	b(&c.noRec, "no-recursive", "", tr("f.norec"))
+	b(&c.lossless, "lossless", "", tr("f.lossless"))
+	b(&c.force, "force", "", tr("f.force"))
+	b(&c.keep, "keep-mtime", "", tr("f.keep"))
+	b(&c.jsonOut, "json", "", tr("f.json"))
+	b(&c.quiet, "quiet", "q", tr("f.quiet"))
+	b(&c.showVersion, "version", "", tr("f.version"))
+	fs.IntVar(&c.jobs, "jobs", 0, tr("f.jobs"))
+	fs.IntVar(&c.jobs, "j", 0, tr("alias", "jobs"))
+	fs.IntVar(&c.maxMemMB, "max-mem", 2048, tr("f.maxmem"))
+	fs.Float64Var(&c.minSSIM, "min-ssim", 0.98, tr("f.minssim"))
+	fs.StringVar(&c.include, "include", "", tr("f.include"))
+	fs.StringVar(&c.lang, "lang", curLang, tr("f.lang"))
+	fs.Var(&c.exclude, "exclude", tr("f.exclude"))
 
 	c.path = "."
 	havePath := false
@@ -81,19 +82,22 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 			break
 		}
 		if havePath {
-			return c, fmt.Errorf("chỉ nhận một đường dẫn, thừa: %q", fs.Arg(0))
+			return c, errors.New(tr("err.onepath", fs.Arg(0)))
 		}
 		c.path, havePath = fs.Arg(0), true
 		args = fs.Args()[1:]
 	}
+	if c.lang != "vi" && c.lang != "en" {
+		return c, errors.New(tr("err.lang"))
+	}
 	if c.minSSIM <= 0 || c.minSSIM > 1 {
-		return c, errors.New("--min-ssim phải nằm trong (0, 1]")
+		return c, errors.New(tr("err.minssim"))
 	}
 	if c.maxMemMB < 1 {
-		return c, errors.New("--max-mem phải >= 1 (MB)")
+		return c, errors.New(tr("err.maxmem"))
 	}
 	if c.jobs < 0 {
-		return c, errors.New("--jobs phải >= 1")
+		return c, errors.New(tr("err.jobs"))
 	}
 	return c, nil
 }
@@ -103,10 +107,11 @@ func main() {
 }
 
 func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
+	curLang = detectLang(args)
 	c, err := parseArgs(args, stderr)
 	if err != nil {
 		if !errors.Is(err, flag.ErrHelp) {
-			fmt.Fprintln(stderr, "Lỗi:", err)
+			fmt.Fprintln(stderr, tr("err.prefix"), err)
 			return 2
 		}
 		return 0
@@ -117,11 +122,11 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	}
 	root, err := filepath.Abs(c.path)
 	if err != nil {
-		fmt.Fprintln(stderr, "Lỗi:", err)
+		fmt.Fprintln(stderr, tr("err.prefix"), err)
 		return 2
 	}
 	if st, err := os.Stat(root); err != nil || !st.IsDir() {
-		fmt.Fprintf(stderr, "Lỗi: %q không phải thư mục\n", c.path)
+		fmt.Fprint(stderr, tr("err.notdir", c.path))
 		return 2
 	}
 
@@ -131,7 +136,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	}
 	scan, err := Scan(root, so)
 	if err != nil {
-		fmt.Fprintln(stderr, "Lỗi quét:", err)
+		fmt.Fprintln(stderr, tr("err.scan"), err)
 		return 2
 	}
 
@@ -142,9 +147,9 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	}
 	extra := ""
 	if scan.Marked > 0 {
-		extra = fmt.Sprintf("  (bỏ qua %d ảnh đã nén)", scan.Marked)
+		extra = tr("found.marked", scan.Marked)
 	}
-	say("Tìm thấy %d ảnh (%s) trong %s%s\n", len(scan.Items), humanSize(scan.TotalBytes), c.path, extra)
+	say("%s", tr("found", len(scan.Items), humanSize(scan.TotalBytes), c.path, extra))
 	if len(scan.Items) == 0 {
 		return 0
 	}
@@ -159,11 +164,11 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	isTTY := term.IsTerminal(int(stdin.Fd()))
 	ok, err := Confirm(stdin, stdout, isTTY, c.yes)
 	if err != nil {
-		fmt.Fprintln(stderr, "Lỗi:", err)
+		fmt.Fprintln(stderr, tr("err.prefix"), err)
 		return 2
 	}
 	if !ok {
-		fmt.Fprintln(stdout, "Đã hủy.")
+		fmt.Fprintln(stdout, tr("canceled"))
 		return 2
 	}
 	for _, t := range scan.StaleTemps {
@@ -181,7 +186,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	budget := int64(c.maxMemMB) << 20
 	debug.SetMemoryLimit(budget + budget/4) // soft limit: GC works harder instead of letting RSS balloon
 	_ = LowerPriority()
-	say("Dùng %d worker.\n\n", workers)
+	say("%s", tr("workers", workers))
 
 	opts := core.DefaultOptions()
 	opts.MinSSIM, opts.Lossless = c.minSSIM, c.lossless
@@ -198,14 +203,14 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	defer signal.Stop(sig)
 	go func() {
 		<-sig
-		fmt.Fprintln(stderr, "\nĐang chờ các file đang xử lý… (nhấn Ctrl+C lần nữa để hủy ngay)")
+		fmt.Fprintln(stderr, tr("waiting"))
 		softCancel()
 		<-sig
 		writeMu.Lock()
 		hardCancel()
 		writeMu.Unlock()
 		writing.Wait() // let an in-flight rename finish: never leave a half-written file
-		fmt.Fprintln(stderr, "Đã hủy.")
+		fmt.Fprintln(stderr, tr("canceled"))
 		os.Exit(1)
 	}()
 
@@ -218,7 +223,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 			res.Duration = time.Since(start)
 			// A codec (e.g. the jpegli wasm module) must not take the whole run down.
 			if p := recover(); p != nil {
-				res.Err = fmt.Errorf("lỗi nội bộ khi nén: %v", p)
+				res.Err = errors.New(tr("err.internal", p))
 			}
 		}()
 		in, err := os.ReadFile(it.Path)
@@ -241,7 +246,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		start = time.Now() // time spent waiting for memory is not compression time
 		if !c.quiet && !c.jsonOut && int64(w)*int64(h) >= 12_000_000 {
 			outMu.Lock()
-			fmt.Fprintf(stdout, "  … đang nén %s (%.1f MP, %s)\n", filepath.Base(it.Path), float64(w*h)/1e6, humanSize(int64(len(in))))
+			fmt.Fprint(stdout, tr("compressing", filepath.Base(it.Path), float64(w*h)/1e6, humanSize(int64(len(in)))))
 			outMu.Unlock()
 		}
 		out, rep, err := core.Compress(in, opts)
@@ -253,7 +258,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		final := in
 		if rep.Skipped == "" {
 			if ow, oh, err := core.CheckLimits(out, f, opts.Limits); err != nil || ow != rep.Width || oh != rep.Height {
-				res.Err = fmt.Errorf("kiểm tra đầu ra thất bại: %v", err)
+				res.Err = errors.New(tr("err.verify", err))
 				return res
 			}
 			writeMu.Lock()
@@ -274,7 +279,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		}
 		if err := Mark(it.Path, final); errors.Is(err, ErrMarkUnsupported) {
 			markWarn.Do(func() {
-				fmt.Fprintln(stderr, "Cảnh báo: hệ thống file không hỗ trợ đánh dấu \"đã nén\"; chạy lại có thể nén ảnh lần nữa.")
+				fmt.Fprintln(stderr, tr("warn.mark"))
 			})
 		}
 		return res
