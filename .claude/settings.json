@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build *)",
+      "Bash(go test *)",
+      "Bash(go vet *)",
+      "Bash(go run *)",
+      "Bash(go mod *)",
+      "Bash(go get *)",
+      "Bash(go doc *)",
+      "Bash(go env *)",
+      "Bash(go list *)",
+      "Bash(go version)",
+      "Bash(go install ./cmd/optiimg)",
+      "Bash(CGO_ENABLED=0 go build *)",
+      "Bash(CGO_ENABLED=0 go install *)",
+      "Bash(gofmt *)",
+      "Bash(make *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch *)",
+      "Bash(git describe *)",
+      "Bash(shasum *)",
+      "Bash(sips *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git tag *)",
+      "Bash(gh release *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_response.filePath // .tool_input.file_path' | { read -r f; case \"$f\" in *.go) gofmt -w \"$f\";; esac; } 2>/dev/null || true",
+            "statusMessage": "gofmt"
+          }
+        ]
+      }
+    ]
+  }
+}
