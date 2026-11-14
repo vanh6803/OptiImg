@@ -3,3 +3,6 @@
 *.optiimg-tmp
 .claude/settings.local.json
 .DS_Store
+/samples/
+/samples-run/
+/samples-src/

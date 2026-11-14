@@ -103,12 +103,12 @@ Không tạo code. Mục đích: chắc chắn đủ công cụ và có ảnh th
 Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 ✅, make ✅. Ảnh gốc của lần đo tham chiếu đã mất, nên dùng ảnh công khai thay thế (quyết định của người dùng, 2026-11-14).
 
 - [x] **Step 1: Toolchain.** `go version` → ≥ 1.27; `CGO_ENABLED=0 go version` chạy được; `git --version`.
-- [x] **Step 2: Tải ảnh nguồn** từ Wikimedia Commons vào `~/optiimg-src/raw/` (cần `-A` User-Agent tùy ý, không chứa thông tin cá nhân):
+- [x] **Step 2: Tải ảnh nguồn** từ Wikimedia Commons vào `samples-src/raw/` (cần `-A` User-Agent tùy ý, không chứa thông tin cá nhân):
   ```sh
-  mkdir -p ~/optiimg-src/raw && cd ~/optiimg-src/raw
+  mkdir -p samples-src/raw && cd samples-src/raw
   curl -sSL -A "optiimg-test-fetch/1.0" -o Mount_Ev.jpg "https://commons.wikimedia.org/wiki/Special:FilePath/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg?width=2400"
   ```
-- [x] **Step 3: Tạo ảnh chụp tham chiếu** vào `~/optiimg-src/` (Task 1 sẽ chép vào `testdata/`):
+- [x] **Step 3: Tạo ảnh chụp tham chiếu** vào `samples-src/` (Task 1 sẽ chép vào `testdata/`):
   ```sh
   sips -s format jpeg -s formatOptions 95 -Z 1200 raw/Mount_Ev.jpg --out photo.jpg   # 1200×652, 309 205 B
   sips -s format png  -Z 800 raw/Mount_Ev.jpg --out photo.png                         # 800×435, 624 457 B
@@ -124,11 +124,11 @@ Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 
 - Create: `go.mod`, `.gitignore`, `testdata/logo.png`, `testdata/photo.png`, `testdata/photo.jpg`, `testdata/README.md`, `testdata/gen/genlogo.go`
 
 **Interfaces:**
-- Consumes: `~/optiimg-src/photo.{jpg,png}` từ Task 0 (đã tạo từ ảnh Wikimedia Commons).
+- Consumes: `samples-src/photo.{jpg,png}` từ Task 0 (đã tạo từ ảnh Wikimedia Commons).
 - Produces: module `optiimg`; ảnh tham chiếu trong `testdata/` (các task sau đọc bằng `os.ReadFile("../../testdata/…")` hoặc đường dẫn tương đối tương ứng).
 
 - [x] **Step 1:** `cd ~/Personal/OptiImg && go mod init optiimg` (repo git đã được khởi tạo) (sửa dòng `go` trong `go.mod` thành `go 1.27`).
-- [x] **Step 2:** Chép `~/optiimg-src/photo.jpg`, `photo.png` vào `testdata/`. Viết `testdata/gen/genlogo.go` (`//go:build ignore`, chỉ dùng thư viện chuẩn, tất định): NRGBA 400×400 nền trong suốt; hình tròn tâm (200,200) bán kính 190; bên trong là ô caro 25 px xen kẽ đỏ `(220,40,40)` và xanh `(40,80,200)`; alpha = 255 bên trong, giảm tuyến tính về 0 trên dải 5 px ở mép (khoảng cách tới tâm 185 → 190). Ghi bằng `png.Encoder{CompressionLevel: png.DefaultCompression}`. Run `go run testdata/gen/genlogo.go -o testdata/logo.png`; kích thước kỳ vọng cỡ 10–20 KB, ≤ 64 màu sau khi lượng tử không làm méo (kiểm ở Task 7).
+- [x] **Step 2:** Chép `samples-src/photo.jpg`, `photo.png` vào `testdata/`. Viết `testdata/gen/genlogo.go` (`//go:build ignore`, chỉ dùng thư viện chuẩn, tất định): NRGBA 400×400 nền trong suốt; hình tròn tâm (200,200) bán kính 190; bên trong là ô caro 25 px xen kẽ đỏ `(220,40,40)` và xanh `(40,80,200)`; alpha = 255 bên trong, giảm tuyến tính về 0 trên dải 5 px ở mép (khoảng cách tới tâm 185 → 190). Ghi bằng `png.Encoder{CompressionLevel: png.DefaultCompression}`. Run `go run testdata/gen/genlogo.go -o testdata/logo.png`; kích thước kỳ vọng cỡ 10–20 KB, ≤ 64 màu sau khi lượng tử không làm méo (kiểm ở Task 7).
 - [x] **Step 3:** Viết `testdata/README.md`: nguồn gốc từng ảnh (“Mount Everest as seen from Drukair2 PLW edit” (Wikimedia Commons) → JPEG q95 1200 px và → PNG 800 px; logo tròn caro đỏ/xanh 400×400 viền mềm 5 px) cùng giấy phép từng ảnh (kiểm tra trang file trên Commons và ghi vào README) và kích thước (309 205 / 624 457 B / kích thước logo thực tế).
 - [x] **Step 4:** `.gitignore` đã có sẵn (`/optiimg`, `/dist/`, `*.optiimg-tmp`, `.claude/settings.local.json`) — chỉ kiểm tra, không ghi đè.
 - [x] **Step 5:** Run `go build ./...` → không lỗi.

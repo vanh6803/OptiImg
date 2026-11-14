@@ -32,7 +32,7 @@ Note: `go test -race` needs cgo, so never set `CGO_ENABLED=0` globally — only 
 
 - Reply to the user in Vietnamese. `AGENTS.md` mirrors the key rules for non-Claude agents.
 - `.claude/settings.json` (committed, shared with the team) pre-allows go/make/gofmt/local git commands, asks before `git push`/`git tag`/`gh release`, and runs `gofmt -w` on every `.go` file after Write/Edit. Personal overrides go in `.claude/settings.local.json` (gitignored).
-- Before Task 1, Task 0 of the plan must be done (done 2026-11-14: reference photos are public Wikimedia Commons images in `~/optiimg-src/`). If `~/optiimg-src/photo.{jpg,png}` are missing, redo Task 0's download steps rather than inventing images.
+- Before Task 1, Task 0 of the plan must be done (done 2026-11-14: reference photos are public Wikimedia Commons images in `samples-src/`). If `samples-src/photo.{jpg,png}` are missing, redo Task 0's download steps rather than inventing images.
 - Tick plan checkboxes as steps finish; commit once per task with the message the plan gives.
 
 ## Architecture
