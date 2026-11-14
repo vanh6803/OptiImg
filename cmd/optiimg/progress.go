@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"time"
+
+	"optiimg/core"
 )
 
 func humanSize(n int64) string {
@@ -54,7 +57,7 @@ func (s *Summary) add(rel string, r Result) {
 	switch {
 	case r.Err != nil:
 		s.Failed++
-		s.Errors = append(s.Errors, fmt.Sprintf("  %s   %v", rel, r.Err))
+		s.Errors = append(s.Errors, fmt.Sprintf("  %s   %s", rel, viErr(r.Err)))
 		return
 	case r.Report.Skipped != "":
 		s.Optimal++
@@ -98,10 +101,26 @@ func fileLine(done, total int, rel string, r Result, tty bool) string {
 		prefix += " " + bar(done, total, 16)
 	}
 	if r.Err != nil {
-		return fmt.Sprintf("%s  %s  lỗi: %v", prefix, rel, r.Err)
+		return fmt.Sprintf("%s  %s  lỗi: %s", prefix, rel, viErr(r.Err))
 	}
 	if r.Report.Skipped != "" {
 		return fmt.Sprintf("%s  %s  đã tối ưu sẵn (%s)", prefix, rel, humanSize(int64(r.Report.SizeIn)))
 	}
 	return fmt.Sprintf("%s  %s  %s → %s  -%.0f%%", prefix, rel, humanSize(int64(r.Report.SizeIn)), humanSize(int64(r.Report.SizeOut)), r.Report.SavedPct)
+}
+
+// viErr renders a Compress error in Vietnamese, as in docs/cli-flow.md §10.
+func viErr(err error) string {
+	switch {
+	case errors.Is(err, core.ErrUnsupportedFormat):
+		return "định dạng không được hỗ trợ (chỉ PNG và JPEG)"
+	case errors.Is(err, core.ErrTooLarge):
+		return "vượt giới hạn kích thước (50 MB hoặc 100 MP)"
+	case errors.Is(err, core.ErrAnimated):
+		return "PNG động (APNG), giữ nguyên file"
+	case errors.Is(err, core.ErrCorrupt):
+		detail := strings.TrimPrefix(err.Error(), core.ErrCorrupt.Error()+": ")
+		return "giải mã thất bại: " + detail
+	}
+	return err.Error()
 }

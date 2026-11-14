@@ -188,6 +188,9 @@ func TestE2EErrorExitCode(t *testing.T) {
 			t.Errorf("%s not compressed", n)
 		}
 	}
+	if !strings.Contains(out, "giải mã thất bại") {
+		t.Errorf("error not in Vietnamese:\n%s", out)
+	}
 	if !strings.Contains(out, "broken.png") {
 		t.Errorf("error list lacks broken.png:\n%s", out)
 	}
@@ -231,5 +234,22 @@ func TestE2EVersion(t *testing.T) {
 	o, err := exec.Command(bin, "--version").Output()
 	if err != nil || string(o) != "optiimg v9.9.9\n" {
 		t.Errorf("out %q err %v", o, err)
+	}
+}
+
+func TestE2ERawIgnoredByDefault(t *testing.T) {
+	dir := fixtures(t)
+	raw := []byte("II*\x00 fake raw payload")
+	write(t, dir, "shot.CR2", raw, 0o644)
+	out, code := runBin(t, dir, nil, "-y")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+	if got, _ := os.ReadFile(filepath.Join(dir, "shot.CR2")); !bytes.Equal(got, raw) {
+		t.Error("RAW file modified")
+	}
+	out, code = runBin(t, dir, nil, "-y", "--include", "cr2")
+	if code != 1 || !strings.Contains(out, "định dạng không được hỗ trợ") {
+		t.Errorf("exit %d\n%s", code, out)
 	}
 }

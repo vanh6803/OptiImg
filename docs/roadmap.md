@@ -33,4 +33,8 @@ Task 11 cần Task 7.
 - Import `jpegli` đăng ký thêm decoder "jpeg" khó tính hơn (có thể panic); `core` gọi `image/jpeg` và `image/png` tường minh, CLI có `recover` quanh mỗi job.
 - Ctrl+C lần hai thoát với mã 1 (đặc tả chỉ có 0/1/2).
 - Chưa đo CPU thực tế bằng Activity Monitor (Task 11 bước 6).
+- **Bộ nhớ khi nén JPEG lớn:** `jpegli` (wasm) cần ≈ 45 byte/pixel: ảnh 50 MP (8640×5760) đỉnh RSS ≈ 2,4 GB, 100 MP có thể ≈ 4,5 GB. Đã đo ngày 2026-11-14. Hướng xử lý: hạ `MaxPixels` mặc định, hoặc tìm q trên vùng cắt giữa ảnh rồi mã hóa đầy đủ một lần.
+- PNG > 50 MB (ví dụ 8K 8640×5760 ≈ 92 MB) bị từ chối bởi giới hạn `MaxBytes`; có thể cần cờ `--max-size`.
+- RAW (CR2/DNG/ARW) không hỗ trợ: quét bỏ qua theo đuôi; `--include cr2` cho ra lỗi "định dạng không được hỗ trợ", file giữ nguyên.
+- Test ảnh nặng: `OPTIIMG_HEAVY_DIR=<thư mục> go test ./core/ -run Heavy -v` (ảnh không commit vì quá lớn).
 - Ngưỡng ảnh tham chiếu đã chuyển sang tỉ lệ vì ảnh gốc đã mất (xem `testdata/README.md`).
