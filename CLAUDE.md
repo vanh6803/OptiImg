@@ -32,7 +32,7 @@ Note: `go test -race` needs cgo, so never set `CGO_ENABLED=0` globally — only 
 
 - Reply to the user in Vietnamese. `AGENTS.md` mirrors the key rules for non-Claude agents.
 - `.claude/settings.json` (committed, shared with the team) pre-allows go/make/gofmt/local git commands, asks before `git push`/`git tag`/`gh release`, and runs `gofmt -w` on every `.go` file after Write/Edit. Personal overrides go in `.claude/settings.local.json` (gitignored).
-- Before Task 1, Task 0 of the plan must be done (reference photos regenerated from the Big Sur wallpapers). If `testdata/` is missing those images, stop and ask — don't fabricate substitutes.
+- Before Task 1, Task 0 of the plan must be done (done 2026-11-14: reference photos are public Wikimedia Commons images in `~/optiimg-src/`). If `~/optiimg-src/photo.{jpg,png}` are missing, redo Task 0's download steps rather than inventing images.
 - Tick plan checkboxes as steps finish; commit once per task with the message the plan gives.
 
 ## Architecture
@@ -46,7 +46,7 @@ Note: `go test -race` needs cgo, so never set `CGO_ENABLED=0` globally — only 
 ## Hard constraints from the plan
 
 - Exact numeric constants (color-distance weights, SSIM window/constants, thresholds, exit codes 0/1/2) are fixed in the plan's "Global Constraints" section — follow them verbatim.
-- Reference tests (`testdata/logo.png ≤ 5000 B`, `photo.png ≤ 212000 B`, `photo.jpg ≤ 110000 B`, PSNR floors) must **not be loosened**; if they fail, tune the algorithm (quant weights, k-means iterations, dither, q range).
+- Reference tests (`testdata/logo.png ≤ 5000 B`, `photo.png ≤ 34%` and `photo.jpg ≤ 36%` of input size, PSNR floors) must **not be loosened**; if they fail, tune the algorithm (quant weights, k-means iterations, dither, q range).
 - Strip all metadata; JPEG keeps only JFIF APP0.
 - User-facing CLI messages are in Vietnamese, matching the samples in `docs/cli-flow.md` §10.
 - Avoid GPL dependencies (the reason for writing our own quantizer instead of libimagequant).

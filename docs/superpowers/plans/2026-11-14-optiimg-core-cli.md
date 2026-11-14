@@ -28,7 +28,7 @@
 - Token bộ nhớ: ≤ 12 MP → 1; ≤ 40 MP → 2; > 40 MP → toàn bộ token.
 - File tạm: `.<tên>.optiimg-tmp` cùng thư mục. Dấu xattr: tên `user.optiimg`, giá trị `v1:<sha256 hex>`; Windows: ADS `<path>:optiimg`.
 - Mã thoát: `0` ok, `1` có file lỗi, `2` lỗi tham số / không xác nhận.
-- Ngưỡng test tham chiếu (cho phép +15% so với dịch vụ tham chiếu): `logo.png ≤ 5000 B`, `photo.png ≤ 212000 B`, `photo.jpg ≤ 110000 B` với PSNR ≥ 33 dB. **Không nới ngưỡng test**; nếu trượt thì chỉnh thuật toán.
+- Ngưỡng test tham chiếu (đặt theo **tỉ lệ** so với ảnh gốc, quy đổi từ số đo của dịch vụ tham chiếu + 15%; ảnh test là ảnh công khai tải từ Wikimedia Commons, không còn là ảnh gốc của lần đo): `logo.png ≤ 5000 B` (ảnh sinh bằng code nên giữ tuyệt đối), `photo.png ≤ 34% kích thước gốc`, `photo.jpg ≤ 36% kích thước gốc`, PSNR tối thiểu `45 / 30 / 33 dB`. **Không nới ngưỡng test**; nếu trượt thì chỉnh thuật toán.
 - Thông điệp CLI bằng tiếng Việt, đúng như mẫu trong `cli-flow.md` mục 10.
 
 ## Review Focus
@@ -99,21 +99,21 @@ Task 8–10 không phụ thuộc `core`, làm song song được với Task 2–
 
 Không tạo code. Mục đích: chắc chắn đủ công cụ và có ảnh tham chiếu **trước** khi bắt đầu Task 1, vì ngưỡng test ở Task 7 được đo trên đúng các ảnh này.
 
-Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 ✅, make ✅, thư mục `tinytest/in/` **không còn**, hình nền Big Sur mới có thumbnail 356 px (bản đầy đủ chưa tải).
+Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 ✅, make ✅. Ảnh gốc của lần đo tham chiếu đã mất, nên dùng ảnh công khai thay thế (quyết định của người dùng, 2026-11-14).
 
-- [ ] **Step 1: Toolchain.** `go version` → ≥ 1.27; `CGO_ENABLED=0 go version` chạy được; `git --version`.
-- [ ] **Step 2: Tải hình nền gốc.** System Settings → Wallpaper → chọn lần lượt **Big Sur Coastline** và **Big Sur Aerial** để macOS tải bản 6016×6016, rồi đặt lại hình nền cũ. Tìm file:
+- [x] **Step 1: Toolchain.** `go version` → ≥ 1.27; `CGO_ENABLED=0 go version` chạy được; `git --version`.
+- [x] **Step 2: Tải ảnh nguồn** từ Wikimedia Commons vào `~/optiimg-src/raw/` (cần `-A` User-Agent tùy ý, không chứa thông tin cá nhân):
   ```sh
-  sudo find /System/Library/AssetsV2 /Library -iname '*Big Sur*' \( -name '*.heic' -o -name '*.jpg' \) -size +1M 2>/dev/null
+  mkdir -p ~/optiimg-src/raw && cd ~/optiimg-src/raw
+  curl -sSL -A "optiimg-test-fetch/1.0" -o Hopetoun.jpg  "https://commons.wikimedia.org/wiki/Special:FilePath/Hopetoun_falls.jpg?width=2400"
+  curl -sSL -A "optiimg-test-fetch/1.0" -o Mount_Ev.jpg   "https://commons.wikimedia.org/wiki/Special:FilePath/Mount_Everest_as_seen_from_Drukair2_PLW_edit.jpg?width=2400"
   ```
-- [ ] **Step 3: Tạo ảnh chụp tham chiếu** vào thư mục tạm `~/optiimg-src/` (Task 1 sẽ chép vào `testdata/`):
+- [x] **Step 3: Tạo ảnh chụp tham chiếu** vào `~/optiimg-src/` (Task 1 sẽ chép vào `testdata/`):
   ```sh
-  mkdir -p ~/optiimg-src
-  sips -s format jpeg -s formatOptions 95 -Z 1200 "<Coastline>" --out ~/optiimg-src/photo.jpg
-  sips -s format png -Z 800 "<Aerial>" --out ~/optiimg-src/photo.png
-  ls -l ~/optiimg-src   # mục tiêu ≈ 306 875 B và ≈ 625 851 B
+  sips -s format jpeg -s formatOptions 95 -Z 1200 raw/Hopetoun.jpg --out photo.jpg   # 1200×800, 504 175 B
+  sips -s format png  -Z 800 raw/Mount_Ev.jpg --out photo.png                         # 800×435, 624 457 B
   ```
-- [ ] **Step 4: Đối chiếu kích thước.** Nếu một ảnh lệch > 5% so với kích thước gốc (306 875 / 625 851 B), ảnh **không còn là ảnh tham chiếu**: dừng lại, báo cho người dùng chọn (a) tìm lại ảnh gốc, hoặc (b) đo lại dịch vụ tham chiếu trên ảnh mới rồi cập nhật `reference-findings.md` và ngưỡng ở Global Constraints. Không tự nới ngưỡng.
+- [x] **Step 4: Ghi nhận kích thước mới** (không còn đối chiếu với 306 875 / 625 851 B): `photo.jpg` = **504 175 B**, `photo.png` = **624 457 B**. Ngưỡng đã quy đổi sang tỉ lệ (Global Constraints), nên không phụ thuộc kích thước tuyệt đối. Rủi ro: ảnh mới có thể nén dễ/khó hơn ảnh cũ; nếu test Task 7 trượt thì chỉnh thuật toán trước, chỉ hỏi người dùng khi chứng minh được tỉ lệ không khả thi.
 - [ ] **Step 5:** Logo do Task 1 sinh bằng code (không cần nguồn ngoài).
 
 ---
@@ -124,12 +124,12 @@ Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 
 - Create: `go.mod`, `.gitignore`, `testdata/logo.png`, `testdata/photo.png`, `testdata/photo.jpg`, `testdata/README.md`, `testdata/gen/genlogo.go`
 
 **Interfaces:**
-- Consumes: `~/optiimg-src/photo.{jpg,png}` từ Task 0.
+- Consumes: `~/optiimg-src/photo.{jpg,png}` từ Task 0 (đã tạo từ ảnh Wikimedia Commons).
 - Produces: module `optiimg`; ảnh tham chiếu trong `testdata/` (các task sau đọc bằng `os.ReadFile("../../testdata/…")` hoặc đường dẫn tương đối tương ứng).
 
 - [ ] **Step 1:** `cd ~/Personal/OptiImg && go mod init optiimg` (repo git đã được khởi tạo) (sửa dòng `go` trong `go.mod` thành `go 1.27`).
 - [ ] **Step 2:** Chép `~/optiimg-src/photo.jpg`, `photo.png` vào `testdata/`. Viết `testdata/gen/genlogo.go` (`//go:build ignore`, chỉ dùng thư viện chuẩn, tất định): NRGBA 400×400 nền trong suốt; hình tròn tâm (200,200) bán kính 190; bên trong là ô caro 25 px xen kẽ đỏ `(220,40,40)` và xanh `(40,80,200)`; alpha = 255 bên trong, giảm tuyến tính về 0 trên dải 5 px ở mép (khoảng cách tới tâm 185 → 190). Ghi bằng `png.Encoder{CompressionLevel: png.DefaultCompression}`. Run `go run testdata/gen/genlogo.go -o testdata/logo.png`; kích thước kỳ vọng cỡ 10–20 KB, ≤ 64 màu sau khi lượng tử không làm méo (kiểm ở Task 7).
-- [ ] **Step 3:** Viết `testdata/README.md`: nguồn gốc từng ảnh (hình nền macOS “Big Sur Coastline” → JPEG q95 1200 px; “Big Sur Aerial” → PNG 800 px; logo tròn caro đỏ/xanh 400×400 viền mềm 5 px) và kích thước gốc (306 875 / 625 851 / 14 485 B).
+- [ ] **Step 3:** Viết `testdata/README.md`: nguồn gốc từng ảnh (“Hopetoun falls” (Wikimedia Commons, `Hopetoun_falls.jpg`) → JPEG q95 1200 px; “Mount Everest as seen from Drukair2 PLW edit” (Wikimedia Commons) → PNG 800 px; logo tròn caro đỏ/xanh 400×400 viền mềm 5 px) cùng giấy phép từng ảnh (kiểm tra trang file trên Commons và ghi vào README) và kích thước (504 175 / 624 457 B / kích thước logo thực tế).
 - [ ] **Step 4:** `.gitignore` đã có sẵn (`/optiimg`, `/dist/`, `*.optiimg-tmp`, `.claude/settings.local.json`) — chỉ kiểm tra, không ghi đè.
 - [ ] **Step 5:** Run `go build ./...` → không lỗi.
 - [ ] **Step 6:** Commit `chore: init module and reference images`.
@@ -329,12 +329,12 @@ Luồng: `Detect` → `CheckLimits` → `IsAnimatedPNG` (→ `ErrAnimated`) → 
 
 ```go
 func TestCompressReference(t *testing.T) {
-    cases := []struct{ file string; maxSize int; minPSNR float64 }{
-        {"logo.png", 5000, 45},
-        {"photo.png", 212000, 30},
-        {"photo.jpg", 110000, 33},
+    cases := []struct{ file string; maxPct int; maxAbs int; minPSNR float64 }{
+        {"logo.png", 0, 5000, 45},   // tuyệt đối (ảnh sinh bằng code)
+        {"photo.png", 34, 0, 30},    // ≤ 34% kích thước gốc
+        {"photo.jpg", 36, 0, 33},    // ≤ 36% kích thước gốc
     }
-    // mỗi case: Compress(DefaultOptions) -> len(out) <= maxSize, r.PSNR >= minPSNR, r.Skipped == ""
+    // mỗi case: Compress(DefaultOptions) -> (maxAbs>0 ? len(out) <= maxAbs : len(out)*100 <= len(in)*maxPct), r.PSNR >= minPSNR, r.Skipped == ""
     // logo.png: r.Colors <= 64, ảnh ra có tRNS
 }
 func TestCompressIdempotent(t *testing.T)   // nén output của photo.png lần 2 -> Skipped == already_optimal, bytes.Equal(out, in)
