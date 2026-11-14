@@ -5,15 +5,14 @@
 - **Go thuần, không cgo** cho `core` và CLI → build chéo mọi nền tảng bằng
   `GOOS` / `GOARCH`.
 - Codec C cần thiết dùng bản **WebAssembly** chạy qua `wazero` (vẫn Go thuần).
-- `core` là thư viện độc lập; CLI và GUI chỉ là lớp vỏ.
+- `core` là thư viện độc lập; CLI chỉ là lớp vỏ. Sản phẩm chỉ chạy trên terminal, không có GUI.
 
 ## 2. Cấu trúc thư mục (dự kiến)
 
 ```
 OptiImg/
 ├── cmd/
-│   ├── optiimg/          # CLI
-│   └── optiimg-gui/      # GUI (Wails)
+│   └── optiimg/          # CLI
 ├── core/
 │   ├── compress.go       # Compress(), Options, Report
 │   ├── detect.go         # nhận diện magic bytes, giới hạn an toàn
@@ -39,7 +38,6 @@ OptiImg/
 | WebP / AVIF / JXL | `gen2brain/webp`, `gen2brain/avif`, `gen2brain/jpegxl` (wasm) | |
 | EXIF | `rwcarlsen/goexif` hoặc tự đọc thẻ Orientation | |
 | CLI | `flag` chuẩn hoặc `cobra` | |
-| GUI | Wails v2 | WebView hệ thống, app ~10 MB |
 
 > Cần kiểm tra lại phiên bản, giấy phép và mức hỗ trợ tính năng của các thư viện wasm
 > trước khi chốt.
@@ -65,30 +63,19 @@ cmd/optiimg/
 └── progress.go    # thanh tiến độ, tổng kết, JSON
 ```
 
-## 5. GUI macOS (Wails)
+## 5. Build và phát hành
 
-- Màn hình chính: vùng kéo thả, danh sách file với trạng thái
-  (đang nén / xong / lỗi), kích thước trước–sau, % giảm.
-- Bảng tùy chọn: định dạng đầu ra, mức chất lượng (Cao / Mặc định / Mạnh → minSSIM), nền trắng.
-- Nút “Lưu tất cả” / “Hiện trong Finder”.
-- Go backend gọi thẳng `core.Compress`, đẩy tiến độ lên giao diện bằng event.
-- GUI cần cgo (WebView) → build trên đúng nền tảng (macOS build trên macOS).
+- Dự án nội bộ. Người bảo trì chạy `make package` trên máy (`CGO_ENABLED=0`, darwin/linux/windows × amd64/arm64, ra `dist/` kèm `checksums.txt`) rồi upload tay lên GitHub Releases theo `docs/release.md`. Không dùng goreleaser/CI phát hành. Ai có Go thì clone repo và `make install`.
 
-## 6. Build và phát hành
-
-- CLI: dự án nội bộ. Người bảo trì chạy `make package` trên máy (`CGO_ENABLED=0`, darwin/linux/windows × amd64/arm64, ra `dist/` kèm `checksums.txt`) rồi upload tay lên GitHub Releases theo `docs/release.md`. Không dùng goreleaser/CI phát hành. Ai có Go thì clone repo và `make install`.
-- GUI: `wails build -platform darwin/universal` → `OptiImg.app`; ký và notarize nếu phân phối.
-
-## 7. Thứ tự làm
+## 6. Thứ tự làm
 
 1. `core/metric`: SSIM, PSNR.
 2. `core/quant` và `core/pngenc`: PNG palette. Kiểm tra với `testdata` (logo ~4,3 KB, ảnh chụp ~184 KB).
 3. `core/jpegenc`: JPEG, tìm q tự động (mục tiêu ~96 KB, PSNR ~34 dB).
 4. CLI và worker pool.
 5. WebP / AVIF / JXL.
-6. GUI bằng Wails.
 
-## 8. Rủi ro
+## 7. Rủi ro
 
 - Codec wasm chậm hơn bản C gốc khoảng 1,5–3 lần.
 - Bộ giảm màu tự viết có thể kém libimagequant; cần chỉnh qua nhiều vòng test.

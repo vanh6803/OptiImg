@@ -17,7 +17,7 @@
 ## Global Constraints
 
 - Module Go: `optiimg`. Go ≥ 1.27. **Không cgo** (`CGO_ENABLED=0` phải build được CLI).
-- Phase 1 chỉ xử lý **PNG và JPEG**. Không đổi định dạng. WebP/AVIF/JXL, chuyển ICC → sRGB và GUI thuộc plan sau (xem `docs/roadmap.md`).
+- Phase 1 chỉ xử lý **PNG và JPEG**. Không đổi định dạng. WebP/AVIF/JXL và chuyển ICC → sRGB thuộc plan sau (xem `docs/roadmap.md`). Sản phẩm chỉ chạy trên terminal — không có GUI.
 - Metadata: xóa hết. Giữ duy nhất JFIF (APP0) với JPEG (cho phép không có APP0).
 - Giới hạn mặc định: file ≤ 50 MB, ảnh ≤ 100 MP; kiểm tra từ header trước khi giải mã.
 - `minSSIM` mặc định `0.98`; dither mặc định `1.0`; PNG tối đa `256` màu.
@@ -529,6 +529,6 @@ Phiên bản: biến `var version = "dev"` trong `cmd/optiimg/main.go`, gán lú
 
 ## Self-Review (đã chạy)
 
-- **Phủ spec:** compression-logic mục 1 (Task 3, 7), 2 (Task 4, 5), 3 (Task 6), 5 (Task 2), 6 (Task 7, 11), 8 (Global Constraints); cli-flow mục 2–10 (Task 8–11); reference-findings mục 6 (Task 7). Mục 4 (WebP/AVIF/JXL), chuyển ICC → sRGB, zopfli, `--lossless` thử 5 bộ lọc, GUI → `docs/roadmap.md`.
+- **Phủ spec:** compression-logic mục 1 (Task 3, 7), 2 (Task 4, 5), 3 (Task 6), 5 (Task 2), 6 (Task 7, 11), 8 (Global Constraints); cli-flow mục 2–10 (Task 8–11); reference-findings mục 6 (Task 7). Mục 4 (WebP/AVIF/JXL), chuyển ICC → sRGB, zopfli, `--lossless` thử 5 bộ lọc → `docs/roadmap.md`.
 - **Tên nhất quán:** `Options`/`DefaultOptions`/`Report`/`Compress` (core), `Item`/`Scan`/`Run`/`Result`/`ReplaceAtomic`/`Mark`/`IsMarked` (CLI) dùng thống nhất giữa các task.
 - **Review Focus:** 5 mục đều đã có test ở task sở hữu.

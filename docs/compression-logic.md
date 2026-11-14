@@ -305,7 +305,7 @@ Quét thư mục, ghi đè an toàn, giới hạn luồng và bộ nhớ, đánh
 xem [cli-flow.md](cli-flow.md).
 
 `core.Compress` chỉ xử lý một ảnh trong bộ nhớ (byte vào → byte ra) và không đụng tới
-file trên đĩa. Mọi việc đọc, ghi, ghi đè đều do lớp CLI hoặc GUI đảm nhận.
+file trên đĩa. Mọi việc đọc, ghi, ghi đè đều do lớp CLI đảm nhận.
 
 ---
 

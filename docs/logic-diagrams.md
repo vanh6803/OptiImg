@@ -75,7 +75,7 @@ flowchart LR
     compress --> metric
 ```
 
-Ranh giới: `core` không biết tới file, thư mục, xattr. Sau này GUI gọi lại đúng `core.Compress`.
+Ranh giới: `core` không biết tới file, thư mục, xattr; mọi I/O thuộc về CLI.
 
 ---
 
