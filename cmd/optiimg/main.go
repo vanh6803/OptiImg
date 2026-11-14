@@ -203,10 +203,16 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	}()
 
 	var markWarn sync.Once
-	job := func(_ context.Context, it Item, acquire func(int64) func()) Result {
+	job := func(_ context.Context, it Item, acquire func(int64) func()) (res Result) {
 		start := time.Now()
-		res := Result{Item: it}
-		defer func() { res.Duration = time.Since(start) }()
+		res = Result{Item: it}
+		defer func() {
+			res.Duration = time.Since(start)
+			// A codec (e.g. the jpegli wasm module) must not take the whole run down.
+			if p := recover(); p != nil {
+				res.Err = fmt.Errorf("lỗi nội bộ khi nén: %v", p)
+			}
+		}()
 		in, err := os.ReadFile(it.Path)
 		if err != nil {
 			res.Err = err

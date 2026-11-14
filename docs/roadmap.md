@@ -27,4 +27,10 @@ Task 11 cần Task 7.
 
 (Ghi vào đây khi phải chọn giải pháp tạm — ví dụ dùng `image/jpeg` baseline nếu jpegli wasm không dùng được.)
 
-- Chưa có.
+- Cổng chất lượng: SSIM luma không đủ cho logo ít màu → thêm cổng PSNR ≥ 45 dB cho kích thước palette (xem `compression-logic.md` §2.4). Cân nhắc SSIM có cả chroma.
+- JPEG: khoảng q auto hạ xuống [55, 80]; SSIM 0,98 không đạt ngay cả ở q85 trên ảnh tham chiếu. Cân nhắc cổng riêng cho JPEG→JPEG.
+- `metric` dùng `img.At()` chung cho mọi kiểu ảnh (chậm với ảnh lớn); thêm đường nhanh cho `*image.NRGBA`/`*image.Paletted` nếu cần.
+- Import `jpegli` đăng ký thêm decoder "jpeg" khó tính hơn (có thể panic); `core` gọi `image/jpeg` và `image/png` tường minh, CLI có `recover` quanh mỗi job.
+- Ctrl+C lần hai thoát với mã 1 (đặc tả chỉ có 0/1/2).
+- Chưa đo CPU thực tế bằng Activity Monitor (Task 11 bước 6).
+- Ngưỡng ảnh tham chiếu đã chuyển sang tỉ lệ vì ảnh gốc đã mất (xem `testdata/README.md`).

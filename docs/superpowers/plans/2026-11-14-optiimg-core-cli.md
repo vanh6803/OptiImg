@@ -114,7 +114,7 @@ Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 
   sips -s format png  -Z 800 raw/Mount_Ev.jpg --out photo.png                         # 800×435, 624 457 B
   ```
 - [x] **Step 4: Ghi nhận kích thước mới** (không còn đối chiếu với 306 875 / 625 851 B): `photo.jpg` = **309 205 B**, `photo.png` = **624 457 B**. Ngưỡng đã quy đổi sang tỉ lệ (Global Constraints), nên không phụ thuộc kích thước tuyệt đối. Rủi ro: ảnh mới có thể nén dễ/khó hơn ảnh cũ; nếu test Task 7 trượt thì chỉnh thuật toán trước, chỉ hỏi người dùng khi chứng minh được tỉ lệ không khả thi.
-- [ ] **Step 5:** Logo do Task 1 sinh bằng code (không cần nguồn ngoài).
+- [x] **Step 5:** Logo do Task 1 sinh bằng code (không cần nguồn ngoài).
 
 ---
 
@@ -127,12 +127,12 @@ Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 
 - Consumes: `~/optiimg-src/photo.{jpg,png}` từ Task 0 (đã tạo từ ảnh Wikimedia Commons).
 - Produces: module `optiimg`; ảnh tham chiếu trong `testdata/` (các task sau đọc bằng `os.ReadFile("../../testdata/…")` hoặc đường dẫn tương đối tương ứng).
 
-- [ ] **Step 1:** `cd ~/Personal/OptiImg && go mod init optiimg` (repo git đã được khởi tạo) (sửa dòng `go` trong `go.mod` thành `go 1.27`).
-- [ ] **Step 2:** Chép `~/optiimg-src/photo.jpg`, `photo.png` vào `testdata/`. Viết `testdata/gen/genlogo.go` (`//go:build ignore`, chỉ dùng thư viện chuẩn, tất định): NRGBA 400×400 nền trong suốt; hình tròn tâm (200,200) bán kính 190; bên trong là ô caro 25 px xen kẽ đỏ `(220,40,40)` và xanh `(40,80,200)`; alpha = 255 bên trong, giảm tuyến tính về 0 trên dải 5 px ở mép (khoảng cách tới tâm 185 → 190). Ghi bằng `png.Encoder{CompressionLevel: png.DefaultCompression}`. Run `go run testdata/gen/genlogo.go -o testdata/logo.png`; kích thước kỳ vọng cỡ 10–20 KB, ≤ 64 màu sau khi lượng tử không làm méo (kiểm ở Task 7).
-- [ ] **Step 3:** Viết `testdata/README.md`: nguồn gốc từng ảnh (“Mount Everest as seen from Drukair2 PLW edit” (Wikimedia Commons) → JPEG q95 1200 px và → PNG 800 px; logo tròn caro đỏ/xanh 400×400 viền mềm 5 px) cùng giấy phép từng ảnh (kiểm tra trang file trên Commons và ghi vào README) và kích thước (309 205 / 624 457 B / kích thước logo thực tế).
-- [ ] **Step 4:** `.gitignore` đã có sẵn (`/optiimg`, `/dist/`, `*.optiimg-tmp`, `.claude/settings.local.json`) — chỉ kiểm tra, không ghi đè.
-- [ ] **Step 5:** Run `go build ./...` → không lỗi.
-- [ ] **Step 6:** Commit `chore: init module and reference images`.
+- [x] **Step 1:** `cd ~/Personal/OptiImg && go mod init optiimg` (repo git đã được khởi tạo) (sửa dòng `go` trong `go.mod` thành `go 1.27`).
+- [x] **Step 2:** Chép `~/optiimg-src/photo.jpg`, `photo.png` vào `testdata/`. Viết `testdata/gen/genlogo.go` (`//go:build ignore`, chỉ dùng thư viện chuẩn, tất định): NRGBA 400×400 nền trong suốt; hình tròn tâm (200,200) bán kính 190; bên trong là ô caro 25 px xen kẽ đỏ `(220,40,40)` và xanh `(40,80,200)`; alpha = 255 bên trong, giảm tuyến tính về 0 trên dải 5 px ở mép (khoảng cách tới tâm 185 → 190). Ghi bằng `png.Encoder{CompressionLevel: png.DefaultCompression}`. Run `go run testdata/gen/genlogo.go -o testdata/logo.png`; kích thước kỳ vọng cỡ 10–20 KB, ≤ 64 màu sau khi lượng tử không làm méo (kiểm ở Task 7).
+- [x] **Step 3:** Viết `testdata/README.md`: nguồn gốc từng ảnh (“Mount Everest as seen from Drukair2 PLW edit” (Wikimedia Commons) → JPEG q95 1200 px và → PNG 800 px; logo tròn caro đỏ/xanh 400×400 viền mềm 5 px) cùng giấy phép từng ảnh (kiểm tra trang file trên Commons và ghi vào README) và kích thước (309 205 / 624 457 B / kích thước logo thực tế).
+- [x] **Step 4:** `.gitignore` đã có sẵn (`/optiimg`, `/dist/`, `*.optiimg-tmp`, `.claude/settings.local.json`) — chỉ kiểm tra, không ghi đè.
+- [x] **Step 5:** Run `go build ./...` → không lỗi.
+- [x] **Step 6:** Commit `chore: init module and reference images`.
 
 ---
 
@@ -148,7 +148,7 @@ Trạng thái kiểm tra ngày 2026-11-14: Go 1.27.4 darwin/arm64 ✅, git 2.54 
   - `func PSNR(a, b image.Image) float64` (trả `math.Inf(1)` khi giống hệt)
   - Hai hàm yêu cầu `a.Bounds().Size() == b.Bounds().Size()`, ngược lại panic (lỗi lập trình).
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestSSIMIdentical(t *testing.T)   // img gradient 64x64: SSIM == 1 (±1e-9), PSNR == +Inf
@@ -157,10 +157,10 @@ func TestSSIMTinyImage(t *testing.T)   // ảnh 3x3: không panic, SSIM(img,img)
 func TestSSIMAlphaMatters(t *testing.T)// cùng RGB, alpha 255 vs 128: SSIM < 0.99
 ```
 
-- [ ] **Step 2:** `go test ./core/metric/` → FAIL (chưa có hàm).
-- [ ] **Step 3:** Cài đặt theo Global Constraints. Ảnh nhỏ hơn 8×8: dùng toàn ảnh làm một cửa sổ. Ảnh có alpha (bất kỳ pixel a<255 ở một trong hai ảnh): tính SSIM trên nền trắng và nền đen, lấy min. PSNR tính trên RGB đã trộn nền trắng.
-- [ ] **Step 4:** `go test ./core/metric/` → PASS.
-- [ ] **Step 5:** Commit `feat(metric): add SSIM and PSNR`.
+- [x] **Step 2:** `go test ./core/metric/` → FAIL (chưa có hàm).
+- [x] **Step 3:** Cài đặt theo Global Constraints. Ảnh nhỏ hơn 8×8: dùng toàn ảnh làm một cửa sổ. Ảnh có alpha (bất kỳ pixel a<255 ở một trong hai ảnh): tính SSIM trên nền trắng và nền đen, lấy min. PSNR tính trên RGB đã trộn nền trắng.
+- [x] **Step 4:** `go test ./core/metric/` → PASS.
+- [x] **Step 5:** Commit `feat(metric): add SSIM and PSNR`.
 
 ---
 
@@ -185,7 +185,7 @@ func TestSSIMAlphaMatters(t *testing.T)// cùng RGB, alpha 255 vs 128: SSIM < 0.
   - `func HasAlpha(img image.Image) bool`
   - `func FlattenWhite(img image.Image) *image.NRGBA` — kết quả mọi pixel A=255
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestDetect(t *testing.T)          // PNG/JPEG magic -> đúng Format; GIF "GIF89a", WebP "RIFF....WEBP", rỗng -> ErrUnsupportedFormat
@@ -196,10 +196,10 @@ func TestFlattenWhite(t *testing.T)    // pixel (0,0,0,0) -> (255,255,255,255); 
 func TestDecodeCorrupt(t *testing.T)   // PNG cắt còn nửa -> ErrCorrupt (errors.Is)
 ```
 
-- [ ] **Step 2:** `go test ./core/` → FAIL.
-- [ ] **Step 3:** Cài đặt. `exif.go`: `func jpegOrientation(b []byte) int` — tìm APP1 `Exif\0\0`, đọc TIFF header (II/MM), IFD0, thẻ `0x0112`; không có hoặc lỗi → 1. Xoay/lật đủ 8 giá trị orientation. Lỗi giải mã bọc bằng `fmt.Errorf("%w: %v", ErrCorrupt, err)`.
-- [ ] **Step 4:** `go test ./core/` → PASS.
-- [ ] **Step 5:** Commit `feat(core): detect formats, limits, decode with EXIF orientation`.
+- [x] **Step 2:** `go test ./core/` → FAIL.
+- [x] **Step 3:** Cài đặt. `exif.go`: `func jpegOrientation(b []byte) int` — tìm APP1 `Exif\0\0`, đọc TIFF header (II/MM), IFD0, thẻ `0x0112`; không có hoặc lỗi → 1. Xoay/lật đủ 8 giá trị orientation. Lỗi giải mã bọc bằng `fmt.Errorf("%w: %v", ErrCorrupt, err)`.
+- [x] **Step 4:** `go test ./core/` → PASS.
+- [x] **Step 5:** Commit `feat(core): detect formats, limits, decode with EXIF orientation`.
 
 ---
 
@@ -227,7 +227,7 @@ Thuật toán đã đặc tả trong `compression-logic.md` mục 2.2–2.6. Cá
 - Nhánh lossless: `CountColors ≤ MaxColors` → palette chính xác, `Stats.Lossless = true`, `SSIM = 1`.
 - Sắp palette: màu a<255 lên đầu; trong mỗi nhóm sắp theo luma tăng dần; ánh xạ lại chỉ số pixel.
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestCountColors(t *testing.T)            // 3 màu -> (3,false); 300 màu, limit 256 -> exceeded == true
@@ -239,10 +239,10 @@ func TestQuantizePicksFewColors(t *testing.T)    // 8 mảng màu phẳng + nhi�
 func TestQuantize16BitAndGray(t *testing.T)      // image.NRGBA64 và image.Gray qua core.ToNRGBA -> không panic, SSIM >= 0.98
 ```
 
-- [ ] **Step 2:** `go test ./core/quant/` → FAIL.
-- [ ] **Step 3:** Cài đặt theo các quyết định trên.
-- [ ] **Step 4:** `go test ./core/quant/` → PASS. Thêm `BenchmarkQuantizePhoto` trên `testdata/photo.png`; ghi lại thời gian vào commit message (mục tiêu < 1 s trên Apple Silicon).
-- [ ] **Step 5:** Commit `feat(quant): median cut + k-means quantizer with adaptive colors`.
+- [x] **Step 2:** `go test ./core/quant/` → FAIL.
+- [x] **Step 3:** Cài đặt theo các quyết định trên.
+- [x] **Step 4:** `go test ./core/quant/` → PASS. Thêm `BenchmarkQuantizePhoto` trên `testdata/photo.png`; ghi lại thời gian vào commit message (mục tiêu < 1 s trên Apple Silicon).
+- [x] **Step 5:** Commit `feat(quant): median cut + k-means quantizer with adaptive colors`.
 
 ---
 
@@ -259,7 +259,7 @@ func TestQuantize16BitAndGray(t *testing.T)      // image.NRGBA64 và image.Gray
 
 Thư viện chuẩn đã: tự chọn bit depth 1/2/4/8 theo số màu palette, ghi `tRNS` khi có màu trong suốt, dùng bộ lọc None cho ảnh palette, chỉ ghi IHDR/PLTE/tRNS/IDAT/IEND. Test xác nhận các điều này; không tự viết lại encoder.
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestEncodePalettedChunks(t *testing.T) // Paletted 40 màu có alpha -> chunk đúng thứ tự IHDR,PLTE,tRNS,IDAT,IEND; color type 3
@@ -268,10 +268,10 @@ func TestEncodeRoundTrip(t *testing.T)       // decode lại -> pixel giống h�
 func TestLosslessGray(t *testing.T)          // NRGBA toàn xám đục -> *image.Gray; có màu -> nguyên kiểu
 ```
 
-- [ ] **Step 2:** `go test ./core/pngenc/` → FAIL.
-- [ ] **Step 3:** Cài đặt.
-- [ ] **Step 4:** `go test ./core/pngenc/` → PASS.
-- [ ] **Step 5:** Commit `feat(pngenc): PNG encoder wrapper`.
+- [x] **Step 2:** `go test ./core/pngenc/` → FAIL.
+- [x] **Step 3:** Cài đặt.
+- [x] **Step 4:** `go test ./core/pngenc/` → PASS.
+- [x] **Step 5:** Commit `feat(pngenc): PNG encoder wrapper`.
 
 ---
 
@@ -288,8 +288,8 @@ func TestLosslessGray(t *testing.T)          // NRGBA toàn xám đục -> *imag
   - `func EncodeAuto(img image.Image, lo, hi int, minSSIM float64) (out []byte, q int, ssim float64, err error)`
   - `func EstimateQuality(b []byte) (q int, ok bool)` — từ bảng lượng tử luma (DQT id 0)
 
-- [ ] **Step 1: Chốt thư viện.** `go get github.com/gen2brain/jpegli@latest`, đọc `go doc github.com/gen2brain/jpegli` để ánh xạ: quality, progressive, chroma subsampling 4:2:0, optimize coding. **Nếu** gói không tồn tại hoặc không hỗ trợ progressive → dùng `image/jpeg` chuẩn, ghi rõ trong `docs/roadmap.md` mục “Nợ kỹ thuật”, và bỏ assert progressive ở Step 2 bằng `t.Skip("baseline encoder")`. Kiểm tra `CGO_ENABLED=0 go build ./...` vẫn qua.
-- [ ] **Step 2: Viết test hỏng**
+- [x] **Step 1: Chốt thư viện.** `go get github.com/gen2brain/jpegli@latest`, đọc `go doc github.com/gen2brain/jpegli` để ánh xạ: quality, progressive, chroma subsampling 4:2:0, optimize coding. **Nếu** gói không tồn tại hoặc không hỗ trợ progressive → dùng `image/jpeg` chuẩn, ghi rõ trong `docs/roadmap.md` mục “Nợ kỹ thuật”, và bỏ assert progressive ở Step 2 bằng `t.Skip("baseline encoder")`. Kiểm tra `CGO_ENABLED=0 go build ./...` vẫn qua.
+- [x] **Step 2: Viết test hỏng**
 
 ```go
 func TestEncodeProgressive(t *testing.T)    // output có marker SOF2 (FF C2); không có APP1..APP15
@@ -298,10 +298,10 @@ func TestEstimateQuality(t *testing.T)      // image/jpeg q=95 -> 93..97; q=70 -
 func TestEncodeAutoMeetsSSIM(t *testing.T)  // testdata/photo.jpg: q trong [55,85], ssim khớp SSIM tính lại ±1e-6; ssim >= 0.98 hoặc q == hi (xem ruling Task 6)
 ```
 
-- [ ] **Step 3:** `go test ./core/jpegenc/` → FAIL.
-- [ ] **Step 4:** Cài đặt. `EncodeAuto`: chia đôi theo `compression-logic.md` mục 3.2 (dừng khi `hi-lo <= 2`, trả `hi`); đo SSIM bằng cách giải mã lại output. `EstimateQuality`: so từng hệ số với bảng chuẩn IJG **theo thứ tự zigzag**, lấy trung bình tỉ lệ `s`, `q = s<=100 ? (200-s)/2 : 5000/s`, làm tròn.
-- [ ] **Step 5:** `go test ./core/jpegenc/` → PASS.
-- [ ] **Step 6:** Commit `feat(jpegenc): progressive JPEG with SSIM-driven quality search`.
+- [x] **Step 3:** `go test ./core/jpegenc/` → FAIL.
+- [x] **Step 4:** Cài đặt. `EncodeAuto`: chia đôi theo `compression-logic.md` mục 3.2 (dừng khi `hi-lo <= 2`, trả `hi`); đo SSIM bằng cách giải mã lại output. `EstimateQuality`: so từng hệ số với bảng chuẩn IJG **theo thứ tự zigzag**, lấy trung bình tỉ lệ `s`, `q = s<=100 ? (200-s)/2 : 5000/s`, làm tròn.
+- [x] **Step 5:** `go test ./core/jpegenc/` → PASS.
+- [x] **Step 6:** Commit `feat(jpegenc): progressive JPEG with SSIM-driven quality search`.
 
 ---
 
@@ -325,7 +325,7 @@ Luồng: `Detect` → `CheckLimits` → `IsAnimatedPNG` (→ `ErrAnimated`) → 
 - Nếu input có ICC (PNG chunk `iCCP`, JPEG APP2 `ICC_PROFILE`) → thêm cảnh báo `icc_profile_dropped`.
 - Điền `SSIM`, `PSNR` (giữa ảnh đã chuẩn hóa và output giải mã lại).
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestCompressReference(t *testing.T) {
@@ -345,10 +345,10 @@ func TestCompressPalettedInput(t *testing.T)// PNG palette sẵn 16 màu -> khô
 func TestCompressUnsupported(t *testing.T)  // GIF -> ErrUnsupportedFormat
 ```
 
-- [ ] **Step 2:** `go test ./core/` → FAIL.
-- [ ] **Step 3:** Cài đặt `Compress`.
-- [ ] **Step 4:** `go test ./core/...` → PASS. Nếu `TestCompressReference` trượt: chỉnh `quant` (trọng số, số vòng k-means, dither) hoặc khoảng q; **không** đổi ngưỡng test.
-- [ ] **Step 5:** Commit `feat(core): Compress pipeline with safety net`.
+- [x] **Step 2:** `go test ./core/` → FAIL.
+- [x] **Step 3:** Cài đặt `Compress`.
+- [x] **Step 4:** `go test ./core/...` → PASS. Nếu `TestCompressReference` trượt: chỉnh `quant` (trọng số, số vòng k-means, dither) hoặc khoảng q; **không** đổi ngưỡng test.
+- [x] **Step 5:** Commit `feat(core): Compress pipeline with safety net`.
 
 ---
 
@@ -370,7 +370,7 @@ func TestCompressUnsupported(t *testing.T)  // GIF -> ErrUnsupportedFormat
 
 Quy tắc quét: `cli-flow.md` mục 4. Include mặc định `png, jpg, jpeg` (không phân biệt hoa thường). File tạm `.*.optiimg-tmp` → đưa vào `StaleTemps`, không vào `Items`. File không có quyền ghi (`unix.Access(path, W_OK)` / mở thử trên Windows) → bỏ qua. Kết quả sắp theo `Path`.
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestScanSkips(t *testing.T) // cây tạm: a.png, sub/b.JPG, .git/c.png, node_modules/d.png, vendor/e.png,
@@ -382,10 +382,10 @@ func TestMarkRoundTrip(t *testing.T) // Mark -> IsMarked true; sửa 1 byte file
 func TestScanSkipsMarked(t *testing.T) // file đã Mark -> không vào Items, Marked == 1; Force -> có trong Items
 ```
 
-- [ ] **Step 2:** `go test ./cmd/optiimg/ -run 'Scan|Mark'` → FAIL.
-- [ ] **Step 3:** Cài đặt. Unix: `unix.Setxattr/Getxattr` tên `user.optiimg`; lỗi `ENOTSUP` → `ErrMarkUnsupported`. Windows: `os.WriteFile(path+":optiimg", …)`. Khác: luôn `ErrMarkUnsupported`.
-- [ ] **Step 4:** Test → PASS (`TestMark*` dùng `t.Skip` khi gặp `ErrMarkUnsupported`).
-- [ ] **Step 5:** Commit `feat(cli): directory scan and xattr marks`.
+- [x] **Step 2:** `go test ./cmd/optiimg/ -run 'Scan|Mark'` → FAIL.
+- [x] **Step 3:** Cài đặt. Unix: `unix.Setxattr/Getxattr` tên `user.optiimg`; lỗi `ENOTSUP` → `ErrMarkUnsupported`. Windows: `os.WriteFile(path+":optiimg", …)`. Khác: luôn `ErrMarkUnsupported`.
+- [x] **Step 4:** Test → PASS (`TestMark*` dùng `t.Skip` khi gặp `ErrMarkUnsupported`).
+- [x] **Step 5:** Commit `feat(cli): directory scan and xattr marks`.
 
 ---
 
@@ -402,7 +402,7 @@ func TestScanSkipsMarked(t *testing.T) // file đã Mark -> không vào Items, M
 
 Các bước: `cli-flow.md` mục 5 (bước 5–9). Mọi lỗi sau khi đã tạo file tạm → xóa file tạm rồi trả lỗi. Windows: rename lỗi → thử lại 3 lần, cách 100 ms.
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestReplaceAtomic(t *testing.T)     // nội dung mới, mode 0640 giữ nguyên, không còn file tạm
@@ -410,10 +410,10 @@ func TestReplaceKeepMtime(t *testing.T)  // keepMtime -> ModTime bằng giá tr�
 func TestReplaceFailureKeepsOriginal(t *testing.T) // thư mục chmod 0555 -> trả lỗi, file gốc giữ nguyên byte, không có file tạm
 ```
 
-- [ ] **Step 2:** Test → FAIL.
-- [ ] **Step 3:** Cài đặt.
-- [ ] **Step 4:** Test → PASS.
-- [ ] **Step 5:** Commit `feat(cli): atomic in-place replace`.
+- [x] **Step 2:** Test → FAIL.
+- [x] **Step 3:** Cài đặt.
+- [x] **Step 4:** Test → PASS.
+- [x] **Step 5:** Commit `feat(cli): atomic in-place replace`.
 
 ---
 
@@ -435,7 +435,7 @@ func TestReplaceFailureKeepsOriginal(t *testing.T) // thư mục chmod 0555 -> t
 
 `acquire` là semaphore có trọng số với tổng `workers` token (`golang.org/x/sync/semaphore`).
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestDefaultWorkers(t *testing.T) // 1->1, 4->2, 8->4, 10->4, 32->4
@@ -445,10 +445,10 @@ func TestRunBigImageAlone(t *testing.T)  // 1 item 50 MP + 5 item nhỏ, workers
 func TestRunCancelStopsDispatch(t *testing.T) // hủy ctx sau kết quả đầu -> tổng kết quả < 20, không job nào bắt đầu sau khi hủy
 ```
 
-- [ ] **Step 2:** Test → FAIL.
-- [ ] **Step 3:** Cài đặt.
-- [ ] **Step 4:** `go test -race ./cmd/optiimg/ -run 'Workers|Tokens|Run'` → PASS.
-- [ ] **Step 5:** Commit `feat(cli): bounded worker pool with memory tokens`.
+- [x] **Step 2:** Test → FAIL.
+- [x] **Step 3:** Cài đặt.
+- [x] **Step 4:** `go test -race ./cmd/optiimg/ -run 'Workers|Tokens|Run'` → PASS.
+- [x] **Step 5:** Commit `feat(cli): bounded worker pool with memory tokens`.
 
 ---
 
@@ -468,7 +468,7 @@ Job cho mỗi file: đọc byte → `IsMarked` (trừ khi `--force`) → `image.
 
 Trước khi phát việc: xóa `StaleTemps` (sau khi đã xác nhận). Ctrl+C: lần 1 hủy ctx phát việc, in “Đang chờ các file đang xử lý…”; lần 2 hủy ctx cứng (job kiểm tra ctx trước `ReplaceAtomic` và bỏ file tạm). Văn bản hiển thị và tổng kết: `cli-flow.md` mục 10. `--json`: mỗi `Report` một dòng (điền `input`, `output` = đường dẫn tương đối), dòng cuối `{"summary": …}`.
 
-- [ ] **Step 1: Viết test hỏng**
+- [x] **Step 1: Viết test hỏng**
 
 ```go
 func TestConfirm(t *testing.T) // yes=true -> true; isTTY+"y\n" -> true; isTTY+"\n" -> false; !isTTY && !yes -> ErrNeedYes
@@ -486,12 +486,12 @@ func TestE2EVersion(t *testing.T)        // --version -> exit 0, stdout bắt đ
                                          // -ldflags "-X main.version=v9.9.9" -> stdout == "optiimg v9.9.9\n"
 ```
 
-- [ ] **Step 2:** `go test ./cmd/optiimg/` → FAIL.
-- [ ] **Step 3:** Cài đặt `confirm.go`, `progress.go`, `main.go`.
-- [ ] **Step 4:** `go test -race ./...` → PASS.
-- [ ] **Step 5: Kiểm tra tay Ctrl+C.** Chép ~200 ảnh vào thư mục tạm, chạy `optiimg -y`, nhấn Ctrl+C một lần → chương trình in thông báo chờ, thoát sau khi các file đang dở xong; chạy lại → chỉ xử lý phần còn lại. Lặp lại, nhấn Ctrl+C hai lần → thoát ngay, `find . -name '*.optiimg-tmp'` rỗng, mọi ảnh mở được.
+- [x] **Step 2:** `go test ./cmd/optiimg/` → FAIL.
+- [x] **Step 3:** Cài đặt `confirm.go`, `progress.go`, `main.go`.
+- [x] **Step 4:** `go test -race ./...` → PASS.
+- [x] **Step 5: Kiểm tra tay Ctrl+C.** Chép ~200 ảnh vào thư mục tạm, chạy `optiimg -y`, nhấn Ctrl+C một lần → chương trình in thông báo chờ, thoát sau khi các file đang dở xong; chạy lại → chỉ xử lý phần còn lại. Lặp lại, nhấn Ctrl+C hai lần → thoát ngay, `find . -name '*.optiimg-tmp'` rỗng, mọi ảnh mở được.
 - [ ] **Step 6: Kiểm tra tay tải máy.** Trên thư mục ~200 ảnh, mở Activity Monitor: CPU của `optiimg` ≤ `workers × 100%`, máy vẫn dùng mượt.
-- [ ] **Step 7:** Commit `feat(cli): in-place optimize command with confirm, progress and signals`.
+- [x] **Step 7:** Commit `feat(cli): in-place optimize command with confirm, progress and signals`.
 
 ---
 
@@ -508,22 +508,22 @@ Phiên bản: biến `var version = "dev"` trong `cmd/optiimg/main.go`, gán lú
 **Interfaces:**
 - Consumes: binary `cmd/optiimg`.
 
-- [ ] **Step 1:** `Makefile` có các target:
+- [x] **Step 1:** `Makefile` có các target:
   - `test`: `go test -race ./...`
   - `build`: `CGO_ENABLED=0 go build -o optiimg ./cmd/optiimg` (máy hiện tại)
   - `install`: `CGO_ENABLED=0 go install ./cmd/optiimg` (vào `$(go env GOPATH)/bin`)
   - `build-all`: vòng lặp `GOOS ∈ {darwin, linux, windows}` × `GOARCH ∈ {amd64, arm64}`, `CGO_ENABLED=0`, xuất `dist/optiimg_<os>_<arch>[.exe]`
   - `clean`: xóa `optiimg`, `dist/`
   - `package`: phụ thuộc `build-all`; mỗi binary nén thành `dist/optiimg_<version>_<os>_<arch>.tar.gz` (Windows: `.zip`, bên trong là `optiimg.exe`), rồi tạo `dist/checksums.txt` bằng `shasum -a 256`. Cả các target build đều dùng `-trimpath` và ldflags phiên bản ở trên.
-- [ ] **Step 2:** Run `make build-all` → đủ 6 file trong `dist/`, không lỗi. Run `make install` → `optiimg --version` in `optiimg <git describe>`.
-- [ ] **Step 3:** Run `make package VERSION=v0.0.0-test` → 6 file nén + `checksums.txt`; `cd dist && shasum -a 256 -c checksums.txt` → mọi dòng OK; giải nén bản darwin_arm64, chạy `--version` → `optiimg v0.0.0-test`.
-- [ ] **Step 4:** Viết `docs/release.md` — quy trình phát hành tay:
+- [x] **Step 2:** Run `make build-all` → đủ 6 file trong `dist/`, không lỗi. Run `make install` → `optiimg --version` in `optiimg <git describe>`.
+- [x] **Step 3:** Run `make package VERSION=v0.0.0-test` → 6 file nén + `checksums.txt`; `cd dist && shasum -a 256 -c checksums.txt` → mọi dòng OK; giải nén bản darwin_arm64, chạy `--version` → `optiimg v0.0.0-test`.
+- [x] **Step 4:** Viết `docs/release.md` — quy trình phát hành tay:
   1. Trên `main` sạch, `make test` qua.
   2. `git tag vX.Y.Z && git push origin vX.Y.Z`
   3. `make clean package` (VERSION lấy từ tag)
   4. Upload: `gh release create vX.Y.Z dist/*.tar.gz dist/*.zip dist/checksums.txt --title vX.Y.Z --generate-notes` (hoặc kéo thả file trên giao diện web GitHub).
-- [ ] **Step 5:** README: mục **Cài đặt** có hai cách: (a) tải file cho đúng máy từ trang Releases, giải nén, chép `optiimg` vào thư mục trong `PATH`; trên macOS binary chưa ký nên lần đầu chạy `xattr -d com.apple.quarantine ./optiimg` (tải bằng `gh release download` thì không bị); (b) có Go ≥ 1.27: `git clone <repo> && cd OptiImg && make install`. Ví dụ `optiimg`, `optiimg -n`, `optiimg -y -j 2`; cảnh báo ghi đè không hoàn tác.
-- [ ] **Step 6:** Commit `build: Makefile, packaging and release guide`.
+- [x] **Step 5:** README: mục **Cài đặt** có hai cách: (a) tải file cho đúng máy từ trang Releases, giải nén, chép `optiimg` vào thư mục trong `PATH`; trên macOS binary chưa ký nên lần đầu chạy `xattr -d com.apple.quarantine ./optiimg` (tải bằng `gh release download` thì không bị); (b) có Go ≥ 1.27: `git clone <repo> && cd OptiImg && make install`. Ví dụ `optiimg`, `optiimg -n`, `optiimg -y -j 2`; cảnh báo ghi đè không hoàn tác.
+- [x] **Step 6:** Commit `build: Makefile, packaging and release guide`.
 
 ---
 

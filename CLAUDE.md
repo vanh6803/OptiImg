@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-OptiImg is an offline image compressor in Go, **terminal-only (CLI) — there is no GUI and none is planned**. **The repo is still design-only — no Go code exists yet.** All design lives in `docs/` (written in Vietnamese). Implementation follows the phase-1 plan at `docs/superpowers/plans/2026-11-14-optiimg-core-cli.md` (12 TDD tasks, checkbox steps); execute it with `superpowers:subagent-driven-development` or `superpowers:executing-plans` as the plan header requires. Update the README "Trạng thái" line and `docs/roadmap.md` as work lands.
+OptiImg is an offline image compressor in Go, **terminal-only (CLI) — there is no GUI and none is planned**. **Phase 1 (core + CLI) is implemented** (branch `feat/core-cli`); design lives in `docs/` (written in Vietnamese). Implementation followed the phase-1 plan at `docs/superpowers/plans/2026-11-14-optiimg-core-cli.md` (12 TDD tasks, checkbox steps); execute it with `superpowers:subagent-driven-development` or `superpowers:executing-plans` as the plan header requires. Update the README "Trạng thái" line and `docs/roadmap.md` as work lands.
 
 Spec documents, by topic:
 - `docs/compression-logic.md` — the compression pipeline spec for `core/` (PNG, JPEG, SSIM, Report JSON, defaults table)
@@ -12,7 +12,7 @@ Spec documents, by topic:
 - `docs/reference-findings.md` — measured numbers from the reference online service (the targets)
 - `docs/architecture.md`, `docs/roadmap.md`, `docs/logic-diagrams.md` (Mermaid diagrams of all flows)
 
-## Commands (once code exists)
+## Commands
 
 ```sh
 go build ./...
