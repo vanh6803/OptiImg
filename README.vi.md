@@ -92,6 +92,7 @@ optiimg                 # 3. nén
 | `--include png,jpg` | Chỉ xử lý các đuôi này. |
 | `--exclude MẪU` | Bỏ qua đường dẫn khớp mẫu, ví dụ `--exclude 'raw/*'` (dùng nhiều lần được). |
 | `--lang vi\|en` | Ngôn ngữ thông báo (mặc định `vi`; hoặc đặt `OPTIIMG_LANG=en`). |
+| `--strip-icc` | Bỏ cả profile màu ICC không phải sRGB (mặc định giữ để màu không bị lệch). |
 | `--json` | In mỗi file một dòng JSON, dòng cuối là tổng kết. Tiện cho script. |
 | `-q`, `--quiet` | Chỉ in tổng kết cuối. |
 
@@ -110,7 +111,7 @@ Mã thoát: `0` không có lỗi · `1` có ít nhất một file lỗi · `2` s
   Ảnh chụp từ điện thoại có thông tin xoay (EXIF) sẽ được xoay đúng rồi lưu lại.
 - **Không đổi định dạng:** PNG vẫn là PNG, JPEG vẫn là JPEG, tên file giữ nguyên. Định dạng được nhận bằng nội dung file,
   không phụ thuộc đuôi.
-- **Xóa metadata** (EXIF, GPS, ICC…) để file nhỏ hơn. Ảnh có ICC sẽ có cảnh báo trong kết quả JSON.
+- **Xóa metadata** (EXIF, GPS, ảnh thu nhỏ…) để file nhỏ hơn. **Giữ profile màu ICC không phải sRGB** (ví dụ Display P3 từ điện thoại) để màu không bị lệch; dùng `--strip-icc` để bỏ. Kết quả JSON báo `icc_profile_kept` / `icc_profile_dropped`.
 - **Không bao giờ làm file to ra:** nếu nén xong không nhỏ hơn bản gốc, file được giữ nguyên.
 - **Chạy lại không nén lần hai:** ảnh đã nén được đánh dấu (thuộc tính mở rộng `user.optiimg` của file), lần sau tự bỏ qua.
   Chỉ ảnh bị sửa sau đó mới được nén lại. Dùng `--force` để ép.

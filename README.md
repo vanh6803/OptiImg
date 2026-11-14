@@ -95,6 +95,7 @@ optiimg                    # 3. compress
 | `--include png,jpg` | Only process these extensions. |
 | `--exclude PATTERN` | Skip paths matching the pattern, e.g. `--exclude 'raw/*'` (repeatable). |
 | `--lang vi\|en` | Message language (default `vi`; or set `OPTIIMG_LANG=en`). |
+| `--strip-icc` | Also drop non-sRGB ICC colour profiles (kept by default so colours do not shift). |
 | `--json` | One JSON line per file, plus a final summary line. Handy for scripts. |
 | `-q`, `--quiet` | Print only the final summary. |
 
@@ -113,7 +114,7 @@ Exit codes: `0` no errors · `1` at least one file failed · `2` bad arguments o
   Phone photos with EXIF rotation are rotated correctly before saving.
 - **Format never changes:** PNG stays PNG, JPEG stays JPEG, file names are unchanged. The format is detected from file
   contents, not the extension.
-- **Metadata is stripped** (EXIF, GPS, ICC…) to save space. Files that had an ICC profile get a warning in the JSON output.
+- **Metadata is stripped** (EXIF, GPS, thumbnails…) to save space. Non-sRGB **ICC colour profiles are kept** (e.g. Display P3 from phones) so colours do not shift; use `--strip-icc` to drop them. The JSON output reports `icc_profile_kept` / `icc_profile_dropped`.
 - **Never makes a file bigger:** if the result is not smaller than the original, the original is kept.
 - **Re-runs do not recompress:** processed images are marked (extended attribute `user.optiimg`) and skipped next time.
   Only files modified afterwards are processed again. Use `--force` to override.

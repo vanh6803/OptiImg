@@ -34,7 +34,7 @@ func (l *listFlag) Set(v string) error { *l = append(*l, v); return nil }
 type config struct {
 	path                                   string
 	yes, dry, noRec, lossless, force, keep bool
-	jsonOut, quiet, showVersion            bool
+	jsonOut, quiet, showVersion, stripICC  bool
 	jobs, maxMemMB                         int
 	minSSIM                                float64
 	include, lang                          string
@@ -60,6 +60,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	b(&c.noRec, "no-recursive", "", tr("f.norec"))
 	b(&c.lossless, "lossless", "", tr("f.lossless"))
 	b(&c.force, "force", "", tr("f.force"))
+	b(&c.stripICC, "strip-icc", "", tr("f.stripicc"))
 	b(&c.keep, "keep-mtime", "", tr("f.keep"))
 	b(&c.jsonOut, "json", "", tr("f.json"))
 	b(&c.quiet, "quiet", "q", tr("f.quiet"))
@@ -189,7 +190,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	say("%s", tr("workers", workers))
 
 	opts := core.DefaultOptions()
-	opts.MinSSIM, opts.Lossless = c.minSSIM, c.lossless
+	opts.MinSSIM, opts.Lossless, opts.StripICC = c.minSSIM, c.lossless, c.stripICC
 
 	softCtx, softCancel := context.WithCancel(context.Background())
 	defer softCancel()

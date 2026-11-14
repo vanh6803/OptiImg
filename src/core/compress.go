@@ -121,7 +121,7 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 				return nil, r, err
 			}
 			r.SSIM, r.PSNR = metric.SSIM(sample, sd), metric.PSNR(sample, sd)
-			return finish(in, enc, r, f)
+			return finish(in, enc, r, f, o)
 		}
 		decoded, err = jpeg.Decode(bytes.NewReader(enc))
 		if err != nil {
@@ -130,13 +130,23 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 		r.SSIM = metric.SSIM(img, decoded)
 	}
 	r.PSNR = metric.PSNR(img, decoded)
-	return finish(in, enc, r, f)
+	return finish(in, enc, r, f, o)
 }
 
-// finish applies the ICC warning and the size guard.
-func finish(in, enc []byte, r Report, f Format) ([]byte, Report, error) {
-	if hasICC(in, f) {
-		r.Warnings = append(r.Warnings, "icc_profile_dropped")
+// finish keeps or drops the ICC profile and applies the size guard.
+func finish(in, enc []byte, r Report, f Format, o Options) ([]byte, Report, error) {
+	if prof := extractICC(in, f); prof != nil {
+		switch {
+		case isSRGB(prof):
+			// sRGB is the default assumption: dropping it changes nothing
+		case o.StripICC:
+			r.Warnings = append(r.Warnings, "icc_profile_dropped")
+		default:
+			enc = embedICC(enc, f, prof)
+			r.Warnings = append(r.Warnings, "icc_profile_kept")
+		}
+	} else if hasICC(in, f) {
+		r.Warnings = append(r.Warnings, "icc_profile_dropped") // present but unreadable
 	}
 	if len(enc) >= len(in) {
 		return skip(in, r), r.withSkip(), nil

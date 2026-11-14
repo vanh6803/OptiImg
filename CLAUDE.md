@@ -47,6 +47,6 @@ Note: `go test -race` needs cgo, so never set `CGO_ENABLED=0` globally — only 
 
 - Exact numeric constants (color-distance weights, SSIM window/constants, thresholds, exit codes 0/1/2) are fixed in the plan's "Global Constraints" section — follow them verbatim.
 - Reference tests (`testdata/logo.png ≤ 5000 B`, `photo.png ≤ 34%` and `photo.jpg ≤ 36%` of input size, PSNR floors) must **not be loosened**; if they fail, tune the algorithm (quant weights, k-means iterations, dither, q range).
-- Strip all metadata; JPEG keeps only JFIF APP0.
+- Strip metadata except non-sRGB ICC profiles (kept unless `StripICC`); JPEG keeps JFIF APP0 (+ APP2 ICC).
 - User-facing CLI messages are in Vietnamese, matching the samples in `docs/cli-flow.md` §10.
 - Avoid GPL dependencies (the reason for writing our own quantizer instead of libimagequant).

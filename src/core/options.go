@@ -24,6 +24,7 @@ type Options struct {
 	Dither   float64 // Floyd–Steinberg strength for PNG
 	Quality  int     // JPEG quality, 0 = auto search
 	WhiteBG  bool    // flatten transparency on white
+	StripICC bool    // drop non-sRGB ICC profiles (default: keep them so colours do not shift)
 	Limits   Limits
 }
 
