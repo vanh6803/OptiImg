@@ -67,6 +67,11 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 		if err != nil {
 			return nil, r, err
 		}
+		if o.Zopfli > 0 {
+			if z, zerr := pngenc.Recompress(enc, o.Zopfli); zerr == nil {
+				enc = z
+			}
+		}
 		if decoded == nil {
 			decoded, err = png.Decode(bytes.NewReader(enc))
 			if err != nil {

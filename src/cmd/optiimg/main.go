@@ -35,6 +35,7 @@ type config struct {
 	path                                   string
 	yes, dry, noRec, lossless, force, keep bool
 	jsonOut, quiet, showVersion, stripICC  bool
+	max                                    bool
 	jobs, maxMemMB                         int
 	minSSIM                                float64
 	include, lang                          string
@@ -61,6 +62,7 @@ func parseArgs(args []string, stderr io.Writer) (config, error) {
 	b(&c.lossless, "lossless", "", tr("f.lossless"))
 	b(&c.force, "force", "", tr("f.force"))
 	b(&c.stripICC, "strip-icc", "", tr("f.stripicc"))
+	b(&c.max, "max", "", tr("f.max"))
 	b(&c.keep, "keep-mtime", "", tr("f.keep"))
 	b(&c.jsonOut, "json", "", tr("f.json"))
 	b(&c.quiet, "quiet", "q", tr("f.quiet"))
@@ -191,6 +193,9 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 
 	opts := core.DefaultOptions()
 	opts.MinSSIM, opts.Lossless, opts.StripICC = c.minSSIM, c.lossless, c.stripICC
+	if c.max {
+		opts.Zopfli = 5
+	}
 
 	softCtx, softCancel := context.WithCancel(context.Background())
 	defer softCancel()

@@ -137,3 +137,27 @@ func TestCompressUnsupported(t *testing.T) {
 		t.Errorf("err = %v", err)
 	}
 }
+
+func TestCompressZopfliSmaller(t *testing.T) {
+	if testing.Short() {
+		t.Skip("zopfli is slow")
+	}
+	in := readTestdata(t, "photo.png")
+	base, _, err := Compress(in, DefaultOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	o := DefaultOptions()
+	o.Zopfli = 5
+	z, r, err := Compress(in, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(z) >= len(base) {
+		t.Errorf("zopfli %d not smaller than default %d", len(z), len(base))
+	}
+	if _, err := png.Decode(bytes.NewReader(z)); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("default %d -> zopfli %d (ssim %.4f)", len(base), len(z), r.SSIM)
+}

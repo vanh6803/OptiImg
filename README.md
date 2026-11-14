@@ -96,6 +96,7 @@ optiimg                    # 3. compress
 | `--exclude PATTERN` | Skip paths matching the pattern, e.g. `--exclude 'raw/*'` (repeatable). |
 | `--lang vi\|en` | Message language (default `vi`; or set `OPTIIMG_LANG=en`). |
 | `--strip-icc` | Also drop non-sRGB ICC colour profiles (kept by default so colours do not shift). |
+| `--max` | PNG about 9% smaller using Zopfli, but 10–100× slower. Good for a one-off final pass on assets you publish. |
 | `--json` | One JSON line per file, plus a final summary line. Handy for scripts. |
 | `-q`, `--quiet` | Print only the final summary. |
 

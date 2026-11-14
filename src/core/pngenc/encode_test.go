@@ -101,3 +101,43 @@ func TestLosslessGray(t *testing.T) {
 		t.Error("colour image changed type")
 	}
 }
+
+func TestRecompressLosslessAndSmaller(t *testing.T) {
+	img := image.NewPaletted(image.Rect(0, 0, 300, 200), color.Palette{
+		color.NRGBA{255, 0, 0, 255}, color.NRGBA{0, 255, 0, 255}, color.NRGBA{0, 0, 255, 255}, color.NRGBA{9, 9, 9, 0}})
+	for i := range img.Pix {
+		img.Pix[i] = uint8((i/7 + i/301) % 4)
+	}
+	base, err := Encode(img)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opt, err := Recompress(base, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(opt) > len(base) {
+		t.Errorf("grew: %d -> %d", len(base), len(opt))
+	}
+	a, err1 := png.Decode(bytes.NewReader(base))
+	b, err2 := png.Decode(bytes.NewReader(opt))
+	if err1 != nil || err2 != nil {
+		t.Fatal(err1, err2)
+	}
+	for y := 0; y < 200; y++ {
+		for x := 0; x < 300; x++ {
+			r1, g1, b1, a1 := a.At(x, y).RGBA()
+			r2, g2, b2, a2 := b.At(x, y).RGBA()
+			if r1 != r2 || g1 != g2 || b1 != b2 || a1 != a2 {
+				t.Fatalf("pixel %d,%d differs", x, y)
+			}
+		}
+	}
+	if _, err := Recompress([]byte("nope"), 5); err == nil {
+		t.Error("garbage accepted")
+	}
+	types, _ := chunks(t, opt)
+	if types[0] != "IHDR" || types[len(types)-1] != "IEND" {
+		t.Errorf("chunk order %v", types)
+	}
+}

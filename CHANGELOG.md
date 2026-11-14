@@ -14,6 +14,7 @@ See [docs/release.md](docs/release.md).
   progressive output. The memory budget estimate is now per format (PNG 25 B/px, JPEG 45 B/px, low-memory JPEG 18 B/px).
 
 ### Added
+- `--max`: re-deflate PNG output with Zopfli (about 9% smaller, 10–100× slower; lossless).
 - Non-sRGB ICC profiles (PNG `iCCP`, JPEG APP2) are now preserved instead of dropped, so Display P3/AdobeRGB photos keep
   their colours; `--strip-icc` restores the old behaviour. Reported as `icc_profile_kept` in `--json`.
 - `--lang vi|en` (and `OPTIIMG_LANG`) to choose the language of CLI messages, including usage and errors.

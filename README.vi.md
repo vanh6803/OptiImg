@@ -93,6 +93,7 @@ optiimg                 # 3. nén
 | `--exclude MẪU` | Bỏ qua đường dẫn khớp mẫu, ví dụ `--exclude 'raw/*'` (dùng nhiều lần được). |
 | `--lang vi\|en` | Ngôn ngữ thông báo (mặc định `vi`; hoặc đặt `OPTIIMG_LANG=en`). |
 | `--strip-icc` | Bỏ cả profile màu ICC không phải sRGB (mặc định giữ để màu không bị lệch). |
+| `--max` | PNG nhỏ hơn thêm khoảng 9% nhờ Zopfli nhưng chậm hơn 10–100 lần. Hợp để chạy một lần cuối cho ảnh đem phát hành. |
 | `--json` | In mỗi file một dòng JSON, dòng cuối là tổng kết. Tiện cho script. |
 | `-q`, `--quiet` | Chỉ in tổng kết cuối. |
 
