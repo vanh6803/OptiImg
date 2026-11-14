@@ -21,7 +21,8 @@ mắt thường khó thấy khác biệt), nhưng chạy local.
 | [docs/cli-flow.md](docs/cli-flow.md) | Luồng CLI: quét thư mục, ghi đè tại chỗ, giới hạn luồng |
 | [docs/architecture.md](docs/architecture.md) | Cấu trúc dự án Go, thư viện, CLI, build |
 | [docs/logic-diagrams.md](docs/logic-diagrams.md) | 24 sơ đồ Mermaid cho toàn bộ logic: CLI, pool, ghi đè, xattr, Compress, PNG, JPEG, SSIM |
-| [docs/release.md](docs/release.md) | Quy trình build và upload GitHub Releases thủ công |
+| [docs/release.md](docs/release.md) | Quy trình phát hành tự động (CI) và thủ công |
+| [CHANGELOG.md](CHANGELOG.md) | Lịch sử thay đổi, nguồn của release notes |
 | [docs/roadmap.md](docs/roadmap.md) | Các giai đoạn, thứ tự task, nợ kỹ thuật |
 | [docs/superpowers/plans/2026-11-14-optiimg-core-cli.md](docs/superpowers/plans/2026-11-14-optiimg-core-cli.md) | Plan chi tiết giai đoạn 1: Core + CLI (12 task, TDD) |
 

@@ -1,23 +1,30 @@
-# Quy trình phát hành (thủ công)
+# Quy trình phát hành
 
-OptiImg là dự án nội bộ: người bảo trì build trên máy mình rồi tự upload lên GitHub Releases.
-Không dùng goreleaser, không có CI phát hành.
+Phát hành **tự động bằng GitHub Actions** (`.github/workflows/ci.yml`), có thể làm tay khi cần.
 
-1. Trên `main` sạch, chạy `make test` → phải qua.
-2. Gắn tag và đẩy lên:
-   ```sh
-   git tag vX.Y.Z && git push origin vX.Y.Z
-   ```
-3. Build và đóng gói (VERSION lấy từ `git describe`, tức là tag):
-   ```sh
-   make clean package
-   ```
-   Kết quả trong `dist/`: 4 file `.tar.gz` (macOS/Linux), 2 file `.zip` (Windows) và `checksums.txt`.
-4. Upload lên GitHub:
-   ```sh
-   gh release create vX.Y.Z dist/*.tar.gz dist/*.zip dist/checksums.txt --title vX.Y.Z --generate-notes
-   ```
-   (hoặc kéo thả các file trên giao diện web của GitHub).
-5. Kiểm tra lại: `cd dist && shasum -a 256 -c checksums.txt`, rồi giải nén bản đúng máy và chạy `optiimg --version`.
+## Tự động (khuyến nghị)
 
-Lưu ý: `git push`, `git tag` và `gh release` là thao tác hướng ra ngoài; chỉ người bảo trì chạy.
+1. Làm xong tính năng, merge vào `main`; CI chạy `go vet`, build không cgo, `go test -race` trên Linux và macOS,
+   và build thử 6 nền tảng.
+2. Muốn phát hành: thêm lên đầu `CHANGELOG.md` một mục mới, ví dụ `## [0.2.0] - 2026-12-01`, kèm các dòng
+   Thêm / Thay đổi / Sửa lỗi; commit và push lên `main`.
+3. Khi CI xanh, job `release` đọc phiên bản mới nhất trong `CHANGELOG.md`. Nếu tag `v0.2.0` **chưa có**, nó chạy
+   `make package`, tạo tag và GitHub Release, đính kèm 4 file `.tar.gz`, 2 file `.zip` và `checksums.txt`.
+   Nội dung release lấy đúng từ mục changelog đó. Nếu tag đã có thì không làm gì.
+
+Push thường (không đổi `CHANGELOG.md`) chỉ chạy test, không tạo release. Chọn số phiên bản theo SemVer:
+sửa lỗi → `0.1.1`, thêm tính năng → `0.2.0`, thay đổi phá vỡ → `1.0.0`.
+
+Cần bật trong repo: Settings → Actions → General → Workflow permissions cho phép "Read and write permissions"
+(hoặc giữ mặc định vì workflow đã khai báo `contents: write` cho job release).
+
+## Thủ công (dự phòng)
+
+```sh
+make test
+make clean package VERSION=v0.2.0
+gh release create v0.2.0 dist/*.tar.gz dist/*.zip dist/checksums.txt \
+  --title v0.2.0 --notes-file <(scripts/release-notes.sh 0.2.0)
+```
+
+Kiểm tra sau khi phát hành: `cd dist && shasum -a 256 -c checksums.txt`, giải nén bản đúng máy, chạy `optiimg --version`.

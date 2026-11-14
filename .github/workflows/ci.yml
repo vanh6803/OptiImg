@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: CGO_ENABLED=0 go build ./...
+      - run: go test -race ./...
+
+  cross-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make build-all VERSION=ci
+
+  # Releases when main carries a version in CHANGELOG.md that has no tag yet.
+  release:
+    needs: [test, cross-build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Decide
+        id: ver
+        run: |
+          v=$(scripts/release-notes.sh --latest)
+          if [ -z "$v" ]; then echo "no version in CHANGELOG.md"; exit 1; fi
+          echo "version=v$v" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$v" >/dev/null 2>&1; then
+            echo "v$v already released, nothing to do"
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Package
+        if: steps.ver.outputs.new == 'true'
+        run: make package VERSION=${{ steps.ver.outputs.version }}
+      - name: Release
+        if: steps.ver.outputs.new == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${{ steps.ver.outputs.version }}
+          scripts/release-notes.sh "${v#v}" > notes.md
+          gh release create "$v" dist/*.tar.gz dist/*.zip dist/checksums.txt \
+            --target "$GITHUB_SHA" --title "$v" --notes-file notes.md
