@@ -33,7 +33,7 @@ Task 11 cần Task 7.
 - Import `jpegli` đăng ký thêm decoder "jpeg" khó tính hơn (có thể panic); `core` gọi `image/jpeg` và `image/png` tường minh, CLI có `recover` quanh mỗi job.
 - Ctrl+C lần hai thoát với mã 1 (đặc tả chỉ có 0/1/2).
 - Chưa đo CPU thực tế bằng Activity Monitor (Task 11 bước 6).
-- **Bộ nhớ khi nén JPEG lớn:** `jpegli` (wasm) cần ≈ 45 byte/pixel: ảnh 50 MP (8640×5760) đỉnh RSS ≈ 2,4 GB, 100 MP có thể ≈ 4,5 GB. Đã đo ngày 2026-11-14. Đã giảm số lần mã hóa lớn (tìm q trên mosaic 1 MP) và dùng ngân sách bộ nhớ; đỉnh RSS khi nén 1 ảnh 50 MP vẫn ≈ 2,5 GB vì jpegli không mã hóa theo dải. Nếu cần thấp hơn: hạ `MaxPixels` hoặc đổi encoder.
+- **Bộ nhớ khi nén JPEG lớn (đã giảm):** > 16 MP dùng đường tiết kiệm RAM (mã hóa tuần tự + tối ưu bảng Huffman không mất mát tự viết ở `jpegenc/huffman.go`): 50 MP từ ≈ 2,4 GB xuống ≈ 0,85 GB, file lớn hơn bản progressive 5–40%. Hướng tiếp: chuyển sang progressive ở bước tối ưu để thu hẹp khoảng cách.
 - RAW (CR2/DNG/ARW) không hỗ trợ: quét bỏ qua theo đuôi; `--include cr2` cho ra lỗi "định dạng không được hỗ trợ", file giữ nguyên.
 - Test ảnh nặng: `OPTIIMG_HEAVY_DIR=<thư mục> go test ./src/core/ -run Heavy -v` (ảnh không commit vì quá lớn).
 - Ngưỡng ảnh tham chiếu đã chuyển sang tỉ lệ vì ảnh gốc đã mất (xem `testdata/README.md`).

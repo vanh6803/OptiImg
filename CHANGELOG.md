@@ -8,6 +8,11 @@ See [docs/release.md](docs/release.md).
 
 ## [Unreleased]
 
+### Changed
+- Images above 16 MP now use a low-memory JPEG path (streaming encode + lossless Huffman optimisation):
+  peak RAM for a 50 MP photo drops from about 2.4 GB to about 0.85 GB, for files roughly 5–40% larger than the
+  progressive output. The memory budget estimate is now per format (PNG 25 B/px, JPEG 45 B/px, low-memory JPEG 18 B/px).
+
 ### Added
 - `--lang vi|en` (and `OPTIIMG_LANG`) to choose the language of CLI messages, including usage and errors.
 

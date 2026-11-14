@@ -94,3 +94,36 @@ func TestDefaultLimitsAllowLargeFiles(t *testing.T) {
 		t.Error("default MaxBytes must be unlimited")
 	}
 }
+
+func TestCompressHugeJPEGUsesLowMemoryMode(t *testing.T) {
+	if testing.Short() {
+		t.Skip("allocates a 17 MP image")
+	}
+	img := image.NewRGBA(image.Rect(0, 0, 4200, 4000)) // 16.8 MP > LowMemPixels
+	for y := 0; y < 4000; y++ {
+		for x := 0; x < 4200; x++ {
+			img.SetRGBA(x, y, color.RGBA{uint8(x/17 + y/13), uint8(x ^ y), uint8(y / 11), 255})
+		}
+	}
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 97}); err != nil {
+		t.Fatal(err)
+	}
+	out, r, err := Compress(buf.Bytes(), DefaultOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Skipped != "" {
+		t.Skip("input already optimal")
+	}
+	found := false
+	for _, w := range r.Warnings {
+		found = found || w == "low_memory_mode"
+	}
+	if !found {
+		t.Errorf("warnings %v lack low_memory_mode", r.Warnings)
+	}
+	if cfg, err := jpeg.DecodeConfig(bytes.NewReader(out)); err != nil || cfg.Width != 4200 || cfg.Height != 4000 {
+		t.Fatalf("output %v %v", cfg, err)
+	}
+}

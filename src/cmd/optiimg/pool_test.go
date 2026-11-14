@@ -6,6 +6,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"optiimg/src/core"
 )
 
 func TestDefaultWorkers(t *testing.T) {
@@ -16,9 +18,20 @@ func TestDefaultWorkers(t *testing.T) {
 	}
 }
 
-func TestMemFor(t *testing.T) {
-	if got := MemFor(10_000_000); got != 500_000_000 {
-		t.Errorf("MemFor(10MP) = %d", got)
+func TestEstimateMem(t *testing.T) {
+	cases := []struct {
+		f    core.Format
+		px   int64
+		want int64
+	}{
+		{core.FormatPNG, 10_000_000, 250_000_000},
+		{core.FormatJPEG, 10_000_000, 450_000_000},
+		{core.FormatJPEG, 50_000_000, 900_000_000}, // low-memory path
+	}
+	for _, c := range cases {
+		if got := EstimateMem(c.f, c.px); got != c.want {
+			t.Errorf("EstimateMem(%s,%d)=%d want %d", c.f, c.px, got, c.want)
+		}
 	}
 }
 
@@ -58,7 +71,7 @@ func TestRunConcurrencyCap(t *testing.T) {
 func TestRunMemoryBudgetLimitsConcurrency(t *testing.T) {
 	var cur, max int32
 	job := func(ctx context.Context, it Item, acquire func(int64) func()) Result {
-		release := acquire(8_000_000) // 400 MB each
+		release := acquire(400 << 20) // 400 MB each
 		defer release()
 		c := atomic.AddInt32(&cur, 1)
 		for {
@@ -85,7 +98,7 @@ func TestRunBigImageAlone(t *testing.T) {
 	job := func(ctx context.Context, it Item, acquire func(int64) func()) Result {
 		px := int64(1000)
 		if it.Path == "a" {
-			px = 50e6
+			px = 4 << 30 // more than the whole budget
 		}
 		release := acquire(px)
 		defer release()

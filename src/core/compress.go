@@ -85,11 +85,19 @@ func Compress(in []byte, o Options) (out []byte, r Report, err error) {
 			sample = jpegenc.Sample(img, 512)
 		}
 		switch {
+		case q > 0 && r.Width*r.Height > jpegenc.LowMemPixels:
+			enc, err = jpegenc.EncodeLowMem(img, q)
+			r.Warnings = append(r.Warnings, "low_memory_mode")
 		case q > 0:
 			enc, err = jpegenc.Encode(img, q)
 		case sample != nil:
 			if _, q, _, err = jpegenc.EncodeAuto(sample, jpegQLo, jpegQHi, o.MinSSIM); err == nil {
-				enc, err = jpegenc.Encode(img, q)
+				if r.Width*r.Height > jpegenc.LowMemPixels {
+					enc, err = jpegenc.EncodeLowMem(img, q)
+					r.Warnings = append(r.Warnings, "low_memory_mode")
+				} else {
+					enc, err = jpegenc.Encode(img, q)
+				}
 			}
 		default:
 			enc, q, _, err = jpegenc.EncodeAuto(img, jpegQLo, jpegQHi, o.MinSSIM)

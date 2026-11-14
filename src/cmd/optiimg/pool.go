@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/semaphore"
 
 	"optiimg/src/core"
+	"optiimg/src/core/jpegenc"
 )
 
 // DefaultWorkers returns clamp(numCPU/2, 1, 4).
@@ -22,16 +23,22 @@ func DefaultWorkers(numCPU int) int {
 	return w
 }
 
-// bytesPerPixel estimates peak memory per pixel while compressing (jpegli
-// needs ≈ 45 B/px, the PNG path ≈ 30 B/px); measured on 4K and 8K photos.
-const bytesPerPixel = 50
-
 // DefaultMemBudget is the default total memory (bytes) the pool lets
 // concurrent jobs claim.
 const DefaultMemBudget int64 = 2 << 30
 
-// MemFor returns the estimated peak memory for an image of the given size.
-func MemFor(pixels int64) int64 { return pixels * bytesPerPixel }
+// EstimateMem returns the estimated peak memory for compressing an image.
+// Measured on 4K/8K photos: PNG ≈ 25 B/px, JPEG ≈ 45 B/px (jpegli buffers the
+// whole image), and ≈ 18 B/px on the low-memory path used above 16 MP.
+func EstimateMem(f core.Format, pixels int64) int64 {
+	switch {
+	case f == core.FormatPNG:
+		return pixels * 25
+	case pixels > jpegenc.LowMemPixels:
+		return pixels * 18
+	}
+	return pixels * 45
+}
 
 // Result is the outcome of one job.
 type Result struct {
@@ -43,7 +50,7 @@ type Result struct {
 
 // Job processes one item. acquire blocks until enough of the memory budget is
 // free and returns the release function.
-type Job func(ctx context.Context, it Item, acquire func(pixels int64) (release func())) Result
+type Job func(ctx context.Context, it Item, acquire func(bytes int64) (release func())) Result
 
 // Run feeds items to a bounded pool: at most `workers` jobs at once, and their
 // estimated memory together stays within budget. Cancelling ctx stops starting new work;
@@ -56,8 +63,7 @@ func Run(ctx context.Context, items []Item, workers int, budget int64, job Job) 
 		budget = DefaultMemBudget
 	}
 	sem := semaphore.NewWeighted(budget)
-	acquire := func(pixels int64) func() {
-		n := MemFor(pixels)
+	acquire := func(n int64) func() {
 		if n > budget {
 			n = budget // too big to share: runs alone
 		}

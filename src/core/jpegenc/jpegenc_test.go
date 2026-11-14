@@ -144,3 +144,98 @@ func absDiff(a, b uint32) uint32 {
 	}
 	return b - a
 }
+
+func TestEncodeStreamingBaseline(t *testing.T) {
+	b, err := EncodeStreaming(smallPhoto(t), 75)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var sof0 bool
+	for _, m := range markers(b) {
+		if m == 0xC0 {
+			sof0 = true
+		}
+		if m == 0xC2 {
+			t.Error("streaming output must not be progressive")
+		}
+	}
+	if !sof0 {
+		t.Error("no SOF0")
+	}
+	if _, err := jpeg.Decode(bytes.NewReader(b)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func samePixels(t *testing.T, a, b []byte) {
+	t.Helper()
+	da, err := jpeg.Decode(bytes.NewReader(a))
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := jpeg.Decode(bytes.NewReader(b))
+	if err != nil {
+		t.Fatalf("optimised output does not decode: %v", err)
+	}
+	ya, yb := da.(*image.YCbCr), db.(*image.YCbCr)
+	if !bytes.Equal(ya.Y, yb.Y) || !bytes.Equal(ya.Cb, yb.Cb) || !bytes.Equal(ya.Cr, yb.Cr) {
+		t.Fatal("pixels differ after Huffman optimisation")
+	}
+}
+
+func TestOptimizeHuffmanLosslessAndSmaller(t *testing.T) {
+	img := loadPhoto(t)
+	for _, q := range []int{60, 85} {
+		base, err := EncodeStreaming(img, q)
+		if err != nil {
+			t.Fatal(err)
+		}
+		opt, err := OptimizeHuffman(base)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(opt) >= len(base) {
+			t.Errorf("q=%d: not smaller (%d -> %d)", q, len(base), len(opt))
+		}
+		samePixels(t, base, opt)
+		t.Logf("q=%d: %d -> %d (-%.1f%%)", q, len(base), len(opt), 100*float64(len(base)-len(opt))/float64(len(base)))
+	}
+}
+
+func TestOptimizeHuffmanStdlibAndGray(t *testing.T) {
+	src := loadPhoto(t)
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, src, &jpeg.Options{Quality: 80}); err != nil { // stdlib: std tables, 4:2:0
+		t.Fatal(err)
+	}
+	opt, err := OptimizeHuffman(buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	samePixels(t, buf.Bytes(), opt)
+	g := image.NewGray(image.Rect(0, 0, 123, 77)) // odd size, single component
+	for i := range g.Pix {
+		g.Pix[i] = uint8(i * 7)
+	}
+	var gb bytes.Buffer
+	jpeg.Encode(&gb, g, nil)
+	gopt, err := OptimizeHuffman(gb.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	da, _ := jpeg.Decode(bytes.NewReader(gb.Bytes()))
+	db, err := jpeg.Decode(bytes.NewReader(gopt))
+	if err != nil || !bytes.Equal(da.(*image.Gray).Pix, db.(*image.Gray).Pix) {
+		t.Fatalf("gray mismatch: %v", err)
+	}
+}
+
+func TestOptimizeHuffmanRejectsProgressive(t *testing.T) {
+	b, _ := Encode(smallPhoto(t), 75) // progressive
+	if _, err := OptimizeHuffman(b); err == nil {
+		t.Error("progressive input accepted")
+	}
+	if _, err := OptimizeHuffman([]byte("nope")); err == nil {
+		t.Error("garbage accepted")
+	}
+}

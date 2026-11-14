@@ -232,6 +232,7 @@ Mục tiêu: mã hóa lại với chất lượng thấp nhất còn đạt ngư
 | Progressive | bật | nhỏ hơn baseline 2–10%, hiển thị dần khi tải |
 | Lấy mẫu màu | 4:2:0 | mắt nhạy độ sáng hơn màu |
 | Tối ưu Huffman | bật | giảm vài % không mất gì |
+| Ảnh > 16 MP | tuần tự + tối ưu Huffman riêng | jpegli progressive cần ≈ 45 B/pixel RAM; đường này ≈ 18 B/pixel, file lớn hơn 5–40% |
 | Bảng lượng tử | bảng của encoder chất lượng cao (jpegli / mozjpeg) | tốt hơn bảng chuẩn IJG |
 
 ---

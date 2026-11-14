@@ -241,7 +241,7 @@ func run(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 			res.Err = err
 			return res
 		}
-		release := acquire(int64(w) * int64(h))
+		release := acquire(EstimateMem(f, int64(w)*int64(h)))
 		defer release()
 		start = time.Now() // time spent waiting for memory is not compression time
 		if !c.quiet && !c.jsonOut && int64(w)*int64(h) >= 12_000_000 {
