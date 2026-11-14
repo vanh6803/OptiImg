@@ -1,171 +1,179 @@
 # OptiImg
 
-Công cụ nén ảnh **chạy hoàn toàn trên máy** (offline), viết bằng Go. Gõ một lệnh trong thư mục chứa ảnh,
-OptiImg nén toàn bộ PNG và JPEG bên trong và ghi đè tại chỗ. Ảnh nhỏ đi khoảng **70–80%**, mắt thường khó thấy khác biệt.
+🇬🇧 **English** · 🇻🇳 [Tiếng Việt](README.vi.md)
 
-- Chỉ chạy trên terminal, không có giao diện đồ họa.
-- Không server, không upload: ảnh không rời khỏi máy bạn.
-- Một file chạy duy nhất, không cần cài thêm gì. Hỗ trợ macOS, Linux, Windows (amd64 và arm64).
+An image compressor that runs **entirely on your machine** (offline), written in Go. Run one command in a folder of
+images and OptiImg compresses every PNG and JPEG inside, overwriting them in place. Files shrink by roughly **70–80%**
+with differences that are hard to see by eye.
+
+- Terminal only, no GUI.
+- No server, no uploads: your images never leave your machine.
+- A single self-contained binary. macOS, Linux and Windows (amd64 and arm64).
 
 ```console
-$ cd ~/Pictures/du-an && optiimg
-Tìm thấy 13 ảnh (210.0 MB) trong .
-Ghi đè trực tiếp lên file gốc, không hoàn tác được. Tiếp tục? [y/N] y
-Dùng 4 worker.
+$ cd ~/Pictures/project && optiimg
+Found 13 images (210.0 MB) in .
+Files are overwritten in place and this cannot be undone. Continue? [y/N] y
+Using 4 workers.
 
-[ 1/13]  4k.jpg      1.2 MB → 85 KB   (giảm 1.1 MB, -93%)  0.9s
-[ 2/13]  4k.png     10.4 MB → 2.5 MB  (giảm 7.9 MB, -76%)  2.9s
+[ 1/13]  4k.jpg      1.2 MB → 85 KB   (saved 1.1 MB, -93%)  0.9s
+[ 2/13]  4k.png     10.4 MB → 2.5 MB  (saved 7.9 MB, -76%)  2.9s
   …
-Xong: 13 đã nén, 0 đã tối ưu sẵn, 0 lỗi
-Dung lượng: 210.0 MB → 42.8 MB  (đã giảm 167.2 MB, -79.6%)
-Thời gian: 23s tổng (2.5s trung bình/ảnh)
+Done: 13 compressed, 0 already optimal, 0 failed
+Size: 210.0 MB → 42.8 MB  (saved 167.2 MB, -79.6%)
+Time: 23s total (2.5s average per image)
 ```
 
-> **Cảnh báo:** ảnh được **ghi đè lên file gốc và không hoàn tác được**. Hãy chạy `optiimg -n` để xem trước,
-> và sao lưu thư mục quan trọng trước khi nén lần đầu.
+> **Heads-up:** images are **overwritten in place and this cannot be undone**. Run `optiimg -n` first to preview, and back
+> up anything important before your first run.
+>
+> The program's runtime messages are currently in Vietnamese; the sample above is translated for readability.
 
-## Cài đặt
+## Install
 
-**Cách 1: tải binary (khuyến nghị).** Vào trang **Releases** của repo, tải file đúng máy:
+**Option 1: download a binary (recommended).** Open the repo's **Releases** page and download the file for your machine:
 
-| Máy | File |
+| Machine | File |
 |---|---|
-| Mac Apple Silicon (M1/M2/…) | `optiimg_<phiên bản>_darwin_arm64.tar.gz` |
-| Mac Intel | `optiimg_<phiên bản>_darwin_amd64.tar.gz` |
-| Linux | `optiimg_<phiên bản>_linux_amd64.tar.gz` hoặc `_arm64` |
-| Windows | `optiimg_<phiên bản>_windows_amd64.zip` (hoặc `_arm64`) |
+| Apple Silicon Mac (M1/M2/…) | `optiimg_<version>_darwin_arm64.tar.gz` |
+| Intel Mac | `optiimg_<version>_darwin_amd64.tar.gz` |
+| Linux | `optiimg_<version>_linux_amd64.tar.gz` or `_arm64` |
+| Windows | `optiimg_<version>_windows_amd64.zip` (or `_arm64`) |
 
 ```sh
 tar -xzf optiimg_*_darwin_arm64.tar.gz
-sudo mv optiimg /usr/local/bin/          # hoặc thư mục bất kỳ trong PATH
+sudo mv optiimg /usr/local/bin/          # or any folder on your PATH
 optiimg --version
 ```
 
-- **macOS:** binary chưa được ký, lần đầu chạy nếu bị chặn thì gõ `xattr -d com.apple.quarantine /usr/local/bin/optiimg`.
-  (Tải bằng `gh release download` thì không bị chặn.)
-- **Windows:** giải nén `optiimg.exe`, đặt vào một thư mục trong `PATH`.
-- Repo private: cần đăng nhập GitHub; với terminal dùng `gh release download <tag> -p '*darwin_arm64*'`.
-- Kiểm tra toàn vẹn (tùy chọn): `shasum -a 256 -c checksums.txt`.
+- **macOS:** the binary is unsigned. If it is blocked on first run: `xattr -d com.apple.quarantine /usr/local/bin/optiimg`
+  (downloading with `gh release download` avoids the block).
+- **Windows:** unzip `optiimg.exe` and put it in a folder on your `PATH`.
+- **Private repo:** you must be signed in to GitHub; from a terminal use `gh release download <tag> -p '*darwin_arm64*'`.
+- Optional integrity check: `shasum -a 256 -c checksums.txt`.
 
-**Cách 2: build từ mã nguồn** (cần Go ≥ 1.27):
+**Option 2: build from source** (Go ≥ 1.27):
 
 ```sh
-git clone <URL-repo> && cd OptiImg
-make install        # cài vào $(go env GOPATH)/bin
+git clone <repo-url> && cd OptiImg
+make install        # installs into $(go env GOPATH)/bin
 ```
 
-## Sử dụng
+## Usage
 
 ```sh
-optiimg                 # quét thư mục hiện tại và cả thư mục con, hỏi xác nhận rồi nén
-optiimg ~/Pictures/anh  # quét một thư mục khác
-optiimg -n              # chỉ liệt kê ảnh sẽ xử lý, không ghi gì
-optiimg -y              # bỏ qua câu hỏi xác nhận (dùng trong script)
-optiimg -y -j 2         # dùng 2 worker, máy ít bị nặng hơn
-optiimg --no-recursive  # không vào thư mục con
+optiimg                 # scan the current folder and subfolders, ask to confirm, then compress
+optiimg ~/Pictures/pics # scan another folder
+optiimg -n              # dry run: list what would be processed, write nothing
+optiimg -y              # skip the confirmation prompt (for scripts)
+optiimg -y -j 2         # use 2 workers: lighter on the machine
+optiimg --no-recursive  # do not descend into subfolders
 optiimg --version
 ```
 
-Một quy trình an toàn cho lần dùng đầu:
+A safe first run:
 
 ```sh
-optiimg -n              # 1. xem sẽ động vào những file nào
-cp -R ./anh ./anh-backup  # 2. sao lưu
-optiimg                 # 3. nén
+optiimg -n                 # 1. see which files would be touched
+cp -R ./pics ./pics-backup # 2. back up
+optiimg                    # 3. compress
 ```
 
-### Các cờ
+### Flags
 
-| Cờ | Ý nghĩa |
+| Flag | Meaning |
 |---|---|
-| `-y`, `--yes` | Bỏ qua bước hỏi `[y/N]`. Không có cờ này mà stdin không phải terminal (chạy trong script) thì lệnh từ chối chạy. |
-| `-n`, `--dry-run` | Chỉ quét và liệt kê, không ghi gì. |
-| `--no-recursive` | Chỉ xử lý thư mục hiện tại, không vào thư mục con. |
-| `-j`, `--jobs N` | Số worker chạy song song. Mặc định tự tính: một nửa số nhân CPU, tối đa 4. |
-| `--max-mem MB` | Ngân sách bộ nhớ cho các ảnh chạy song song (mặc định 2048). Hạ xuống nếu máy ít RAM. |
-| `--min-ssim S` | Ngưỡng chất lượng 0–1 (mặc định 0.98). Số càng cao ảnh càng đẹp nhưng file càng lớn. |
-| `--lossless` | PNG không giảm màu (không mất chất lượng, nén ít hơn). |
-| `--force` | Nén lại cả ảnh đã được đánh dấu "đã nén". |
-| `--keep-mtime` | Giữ nguyên thời gian sửa đổi của file. |
-| `--include png,jpg` | Chỉ xử lý các đuôi này. |
-| `--exclude MẪU` | Bỏ qua đường dẫn khớp mẫu, ví dụ `--exclude 'raw/*'` (dùng nhiều lần được). |
-| `--json` | In mỗi file một dòng JSON, dòng cuối là tổng kết. Tiện cho script. |
-| `-q`, `--quiet` | Chỉ in tổng kết cuối. |
+| `-y`, `--yes` | Skip the `[y/N]` prompt. Without it, if stdin is not a terminal (e.g. in a script) the command refuses to run. |
+| `-n`, `--dry-run` | Scan and list only, write nothing. |
+| `--no-recursive` | Process only the given folder, not its subfolders. |
+| `-j`, `--jobs N` | Parallel workers. Default: half the CPU cores, at most 4. |
+| `--max-mem MB` | Memory budget for images processed in parallel (default 2048). Lower it on low-RAM machines. |
+| `--min-ssim S` | Quality threshold 0–1 (default 0.98). Higher means better-looking but larger files. |
+| `--lossless` | PNG without colour reduction (no quality loss, smaller savings). |
+| `--force` | Recompress files already marked as compressed. |
+| `--keep-mtime` | Keep each file's original modification time. |
+| `--include png,jpg` | Only process these extensions. |
+| `--exclude PATTERN` | Skip paths matching the pattern, e.g. `--exclude 'raw/*'` (repeatable). |
+| `--json` | One JSON line per file, plus a final summary line. Handy for scripts. |
+| `-q`, `--quiet` | Print only the final summary. |
 
-Mã thoát: `0` không có lỗi · `1` có ít nhất một file lỗi · `2` sai tham số hoặc không xác nhận.
+Exit codes: `0` no errors · `1` at least one file failed · `2` bad arguments or not confirmed.
 
-### Nhấn Ctrl+C
+### Pressing Ctrl+C
 
-- **Một lần:** ngừng nhận thêm ảnh, chờ các ảnh đang xử lý xong rồi in tổng kết. Chạy lại lệnh sẽ làm tiếp phần còn lại.
-- **Hai lần:** hủy ngay. Không để lại file tạm, file gốc không bị hỏng.
+- **Once:** stop taking new images, let the ones in progress finish, print the summary. Run the command again to continue with the rest.
+- **Twice:** cancel immediately. No temp files are left behind and original files are never damaged.
 
-## OptiImg làm gì với ảnh của bạn
+## What OptiImg does to your images
 
-- **PNG:** giảm xuống tối đa 256 màu bằng thuật toán riêng (median cut, k-means, dither), tự chọn số màu ít nhất mà
-  vẫn giữ chất lượng. Giữ nguyên độ trong suốt.
-- **JPEG:** mã hóa lại bằng jpegli (progressive, 4:2:0), tự dò mức chất lượng thấp nhất còn đạt ngưỡng.
-  Ảnh chụp từ điện thoại có thông tin xoay (EXIF) sẽ được xoay đúng rồi lưu lại.
-- **Không đổi định dạng:** PNG vẫn là PNG, JPEG vẫn là JPEG, tên file giữ nguyên. Định dạng được nhận bằng nội dung file,
-  không phụ thuộc đuôi.
-- **Xóa metadata** (EXIF, GPS, ICC…) để file nhỏ hơn. Ảnh có ICC sẽ có cảnh báo trong kết quả JSON.
-- **Không bao giờ làm file to ra:** nếu nén xong không nhỏ hơn bản gốc, file được giữ nguyên.
-- **Chạy lại không nén lần hai:** ảnh đã nén được đánh dấu (thuộc tính mở rộng `user.optiimg` của file), lần sau tự bỏ qua.
-  Chỉ ảnh bị sửa sau đó mới được nén lại. Dùng `--force` để ép.
-- **Ghi đè an toàn:** ghi vào file tạm cùng thư mục, `fsync` rồi mới đổi tên. Mất điện hay bị kill giữa chừng thì file gốc vẫn nguyên.
+- **PNG:** reduced to at most 256 colours with a custom algorithm (median cut, k-means, dithering), choosing the fewest
+  colours that still meet the quality target. Transparency is preserved.
+- **JPEG:** re-encoded with jpegli (progressive, 4:2:0), automatically finding the lowest quality that still meets the target.
+  Phone photos with EXIF rotation are rotated correctly before saving.
+- **Format never changes:** PNG stays PNG, JPEG stays JPEG, file names are unchanged. The format is detected from file
+  contents, not the extension.
+- **Metadata is stripped** (EXIF, GPS, ICC…) to save space. Files that had an ICC profile get a warning in the JSON output.
+- **Never makes a file bigger:** if the result is not smaller than the original, the original is kept.
+- **Re-runs do not recompress:** processed images are marked (extended attribute `user.optiimg`) and skipped next time.
+  Only files modified afterwards are processed again. Use `--force` to override.
+- **Safe overwrite:** writes to a temp file in the same folder, `fsync`, then renames. If power fails or the process is
+  killed midway, the original file is intact.
 
-Bị bỏ qua: thư mục ẩn (`.git`…), `node_modules`, `vendor`, symlink, file không có quyền ghi, PNG động (APNG), file không phải PNG/JPEG.
+Skipped: hidden folders (`.git`…), `node_modules`, `vendor`, symlinks, read-only files, animated PNG (APNG), and anything
+that is not PNG/JPEG.
 
-## Kết quả tham khảo
+## Reference results
 
-Đo trên MacBook Apple Silicon, 4 worker, ảnh thật (một phần là ảnh mô phỏng log/16-bit):
+Measured on an Apple Silicon MacBook, 4 workers, real photos (some are simulated log-profile/16-bit variants):
 
-| Ảnh | Trước | Sau | Giảm | Thời gian |
+| Image | Before | After | Saved | Time |
 |---|---|---|---|---|
-| JPEG 4K (nhiều chi tiết) | 3,3 MB | 1,1 MB | 68% | 1,2 s |
-| PNG 4K | 10,4 MB | 2,5 MB | 76% | 2,9 s |
-| PNG 16-bit 4K | 32,7 MB | 3,0 MB | 91% | 1,9 s |
-| JPEG 8K (50 MP) | 26,6 MB | 5,7 MB | 78% | 5,7 s |
-| PNG 8K (50 MP) | 92 MB | 22 MB | 76% | 8,6 s |
-| Logo PNG trong suốt | 11 KB | 4 KB | 67% | 0,1 s |
+| 4K JPEG (detailed) | 3.3 MB | 1.1 MB | 68% | 1.2 s |
+| 4K PNG | 10.4 MB | 2.5 MB | 76% | 2.9 s |
+| 4K 16-bit PNG | 32.7 MB | 3.0 MB | 91% | 1.9 s |
+| 8K JPEG (50 MP) | 26.6 MB | 5.7 MB | 78% | 5.7 s |
+| 8K PNG (50 MP) | 92 MB | 22 MB | 76% | 8.6 s |
+| Transparent PNG logo | 11 KB | 4 KB | 67% | 0.1 s |
 
-Tỉ lệ giảm phụ thuộc nội dung ảnh: ảnh phẳng/bầu trời giảm rất nhiều, ảnh nhiều chi tiết giảm ít hơn.
+Savings depend on content: flat areas and skies shrink a lot, highly detailed images less.
 
-## Giới hạn
+## Limits
 
-- Chỉ hỗ trợ **PNG và JPEG**. RAW (CR2, DNG, ARW…), WebP, AVIF, JXL, GIF chưa hỗ trợ; các file này bị bỏ qua và không bị sửa.
-- Ảnh tối đa **100 megapixel**. Không giới hạn dung lượng file.
-- **Bộ nhớ:** ảnh 50 MP cần khoảng 2,5 GB RAM khi nén JPEG. Máy ít RAM nên đặt `--max-mem` thấp hơn và `-j 1`.
-- Hệ thống file không hỗ trợ thuộc tính mở rộng (một số ổ FAT/exFAT, ổ mạng) thì không đánh dấu được "đã nén":
-  chạy lại có thể nén ảnh thêm một lần nữa. Công cụ sẽ cảnh báo một lần.
-- Ảnh JPEG trên 4 MP dò chất lượng trên mẫu của ảnh nên chỉ số SSIM/PSNR trong `--json` là của mẫu đó.
+- Only **PNG and JPEG**. RAW (CR2, DNG, ARW…), WebP, AVIF, JXL and GIF are not supported; they are skipped and never modified.
+- Images up to **100 megapixels**. No limit on file size.
+- **Memory:** a 50 MP image needs about 2.5 GB of RAM when compressing JPEG. On low-RAM machines use a lower `--max-mem` and `-j 1`.
+- File systems without extended attributes (some FAT/exFAT volumes, network drives) cannot store the "already compressed"
+  mark, so a re-run may compress images once more. A warning is printed once.
+- For JPEGs above 4 MP the quality search runs on a sample of the image, so the SSIM/PSNR in `--json` describe that sample.
 
-## Câu hỏi thường gặp
+## FAQ
 
-**Ảnh có bị mờ không?** Mức mặc định nhắm tới SSIM 0,98 (mắt thường khó thấy khác biệt). Muốn giữ chất lượng cao hơn:
-`--min-ssim 0.99`, hoặc `--lossless` cho PNG.
+**Will images look blurry?** The default targets SSIM 0.98 (differences are hard to see). For higher fidelity use
+`--min-ssim 0.99`, or `--lossless` for PNG.
 
-**Lỡ nén rồi, khôi phục được không?** Không. Hãy sao lưu trước. Nén JPEG nhiều lần làm ảnh xấu dần, nên OptiImg đánh dấu để không nén lặp.
+**I already compressed them. Can I undo it?** No. Back up first. Recompressing JPEGs repeatedly degrades them, which is
+why OptiImg marks processed files.
 
-**Chạy trong script/CI thế nào?** `optiimg -y --json ./thu-muc`; kiểm tra mã thoát (`1` là có file lỗi).
+**How do I use it in scripts/CI?** `optiimg -y --json ./folder`, then check the exit code (`1` means some file failed).
 
-**Máy bị nặng khi chạy?** Dùng `-j 1` hoặc `-j 2`. Tiến trình đã tự hạ độ ưu tiên (`nice +10` trên macOS/Linux).
+**The machine gets sluggish while it runs.** Use `-j 1` or `-j 2`. The process already lowers its own priority (`nice +10` on macOS/Linux).
 
-**Báo lỗi thế nào?** Gửi kèm phiên bản (`optiimg --version`), hệ điều hành và dòng lỗi trong phần "Lỗi:" cuối kết quả.
+**How do I report a bug?** Include `optiimg --version`, your OS, and the lines under the final error list.
 
-## Dành cho người phát triển
+## For developers
 
-Mã nguồn Go ≥ 1.27, không cgo. Lệnh thường dùng: `make test`, `make build`, `make build-all`, `make package`.
-Phát hành tự động khi thêm phiên bản mới lên đầu [CHANGELOG.md](CHANGELOG.md) và push `main`
-(xem [docs/release.md](docs/release.md)).
+Go ≥ 1.27, no cgo. Common commands: `make test`, `make build`, `make build-all`, `make package`.
+Releases are automatic: add a new version at the top of [CHANGELOG.md](CHANGELOG.md) and push `main`
+(see [docs/release.md](docs/release.md)). The design documents under `docs/` are written in Vietnamese.
 
-| Tài liệu | Nội dung |
+| Document | Contents |
 |---|---|
-| [docs/compression-logic.md](docs/compression-logic.md) | Logic nén: pipeline, PNG, JPEG, SSIM |
-| [docs/cli-flow.md](docs/cli-flow.md) | Luồng CLI: quét, ghi đè, giới hạn tài nguyên, đánh dấu, Ctrl+C |
-| [docs/architecture.md](docs/architecture.md) | Cấu trúc dự án, thư viện, build |
-| [docs/logic-diagrams.md](docs/logic-diagrams.md) | Sơ đồ Mermaid cho toàn bộ logic |
-| [docs/reference-findings.md](docs/reference-findings.md) | Số đo từ dịch vụ tham chiếu, dùng làm mục tiêu |
-| [docs/roadmap.md](docs/roadmap.md) | Lộ trình, nợ kỹ thuật |
-| [docs/release.md](docs/release.md) | Quy trình phát hành |
-| [CHANGELOG.md](CHANGELOG.md) | Lịch sử thay đổi |
-| [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md) | Hướng dẫn cho AI agent làm việc trong repo |
+| [docs/compression-logic.md](docs/compression-logic.md) | Compression logic: pipeline, PNG, JPEG, SSIM |
+| [docs/cli-flow.md](docs/cli-flow.md) | CLI flow: scanning, overwrite, resource limits, marking, Ctrl+C |
+| [docs/architecture.md](docs/architecture.md) | Project layout, libraries, build |
+| [docs/logic-diagrams.md](docs/logic-diagrams.md) | Mermaid diagrams of all logic |
+| [docs/reference-findings.md](docs/reference-findings.md) | Measurements from the reference service used as targets |
+| [docs/roadmap.md](docs/roadmap.md) | Roadmap and technical debt |
+| [docs/release.md](docs/release.md) | Release process |
+| [CHANGELOG.md](CHANGELOG.md) | Change history |
+| [CLAUDE.md](CLAUDE.md), [AGENTS.md](AGENTS.md) | Guidance for AI agents working in this repo |
