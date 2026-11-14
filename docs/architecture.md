@@ -11,27 +11,31 @@
 
 ```
 OptiImg/
-├── cmd/
-│   └── optiimg/          # CLI
-├── core/
-│   ├── compress.go       # Compress(), Options, Report
-│   ├── detect.go         # nhận diện magic bytes, giới hạn an toàn
-│   ├── normalize.go      # xoay EXIF, sRGB, flatten nền trắng
-│   ├── quant/            # median cut, k-means, dithering, sắp palette
-│   ├── metric/           # SSIM, PSNR
-│   ├── pngenc/           # ghi PNG palette / lossless
-│   ├── jpegenc/          # bọc encoder JPEG + tìm q
-│   └── modern/           # WebP / AVIF / JXL
+├── src/
+│   ├── cmd/
+│   │   └── optiimg/      # CLI
+│   └── core/
+│       ├── compress.go   # Compress(), Options, Report
+│       ├── detect.go     # nhận diện magic bytes, giới hạn an toàn
+│       ├── normalize.go  # xoay EXIF, flatten nền trắng, chuyển NRGBA
+│       ├── quant/        # median cut, k-means, dithering, sắp palette
+│       ├── metric/       # SSIM, PSNR
+│       ├── pngenc/       # ghi PNG palette / lossless
+│       └── jpegenc/      # bọc encoder JPEG + tìm q + lấy mẫu
 ├── testdata/             # ảnh test + kết quả tham chiếu
-└── docs/
+├── scripts/              # script hỗ trợ release
+├── docs/
+└── .github/workflows/    # CI + tự phát hành
 ```
+
+Module Go là `optiimg`; import dạng `optiimg/src/core/...`.
 
 ## 3. Thư viện
 
 | Việc | Lựa chọn | Ghi chú |
 |---|---|---|
 | Đọc/ghi PNG | `image/png` (thư viện chuẩn) | ảnh palette tự ghi tRNS, bộ lọc None |
-| Giảm màu | tự viết (`core/quant`) | tránh libimagequant (GPL) |
+| Giảm màu | tự viết (`src/core/quant`) | tránh libimagequant (GPL) |
 | Dithering | tự viết, tham khảo `image/draw.FloydSteinberg` | cần hệ số dither và bỏ qua pixel trong suốt |
 | Deflate mạnh | zopfli bản Go (tùy chọn) | |
 | JPEG | `gen2brain/jpegli` (wasm) | progressive, bảng lượng tử tốt; `image/jpeg` chuẩn không có progressive |
@@ -50,10 +54,10 @@ giới hạn số luồng để không làm quá tải máy.
 Chi tiết luồng, cú pháp, ghi đè an toàn, giới hạn luồng và bộ nhớ, đánh dấu file đã nén:
 xem [cli-flow.md](cli-flow.md).
 
-Thêm vào `cmd/optiimg/`:
+Thêm vào `src/cmd/optiimg/`:
 
 ```
-cmd/optiimg/
+src/cmd/optiimg/
 ├── main.go        # parse flag, hỏi xác nhận, tín hiệu Ctrl+C
 ├── scan.go        # duyệt thư mục, lọc, bỏ qua file đã đánh dấu
 ├── pool.go        # worker pool + token bộ nhớ
@@ -65,13 +69,13 @@ cmd/optiimg/
 
 ## 5. Build và phát hành
 
-- Dự án nội bộ. Người bảo trì chạy `make package` trên máy (`CGO_ENABLED=0`, darwin/linux/windows × amd64/arm64, ra `dist/` kèm `checksums.txt`) rồi upload tay lên GitHub Releases theo `docs/release.md`. Không dùng goreleaser/CI phát hành. Ai có Go thì clone repo và `make install`.
+- Dự án nội bộ. Người bảo trì chạy `make package` trên máy (`CGO_ENABLED=0`, darwin/linux/windows × amd64/arm64, ra `dist/` kèm `checksums.txt`) rồi upload tay lên GitHub Releases theo `docs/release.md`. Không dùng goreleaser; phát hành tự động bằng GitHub Actions khi `CHANGELOG.md` có phiên bản mới (xem `docs/release.md`). Ai có Go thì clone repo và `make install`.
 
 ## 6. Thứ tự làm
 
-1. `core/metric`: SSIM, PSNR.
-2. `core/quant` và `core/pngenc`: PNG palette. Kiểm tra với `testdata` (logo ~4,3 KB, ảnh chụp ~184 KB).
-3. `core/jpegenc`: JPEG, tìm q tự động (mục tiêu ~96 KB, PSNR ~34 dB).
+1. `src/core/metric`: SSIM, PSNR.
+2. `src/core/quant` và `src/core/pngenc`: PNG palette. Kiểm tra với `testdata` (logo ~4,3 KB, ảnh chụp ~184 KB).
+3. `src/core/jpegenc`: JPEG, tìm q tự động (mục tiêu ~96 KB, PSNR ~34 dB).
 4. CLI và worker pool.
 5. WebP / AVIF / JXL.
 

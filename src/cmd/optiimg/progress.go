@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"optiimg/core"
+	"optiimg/src/core"
 )
 
 func humanSize(n int64) string {

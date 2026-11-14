@@ -20,7 +20,7 @@ import (
 
 	"golang.org/x/term"
 
-	"optiimg/core"
+	"optiimg/src/core"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".

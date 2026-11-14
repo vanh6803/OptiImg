@@ -1,6 +1,6 @@
 # Logic nén ảnh của OptiImg
 
-Tài liệu mô tả toàn bộ logic nén. Đây là đặc tả để viết code `core/`.
+Tài liệu mô tả toàn bộ logic nén. Đây là đặc tả để viết code `src/core/`.
 
 Nguyên tắc chung: **bỏ phần mắt không thấy, bỏ dữ liệu thừa, mã hóa lại gọn hơn,
 và tự chọn mức chất lượng thấp nhất mà ảnh vẫn trông như gốc.**

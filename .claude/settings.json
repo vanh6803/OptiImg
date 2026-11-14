@@ -11,7 +11,7 @@
       "Bash(go env *)",
       "Bash(go list *)",
       "Bash(go version)",
-      "Bash(go install ./cmd/optiimg)",
+      "Bash(go install ./src/cmd/optiimg)",
       "Bash(CGO_ENABLED=0 go build *)",
       "Bash(CGO_ENABLED=0 go install *)",
       "Bash(gofmt *)",

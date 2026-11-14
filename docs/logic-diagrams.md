@@ -39,7 +39,7 @@ plan: [superpowers/plans/2026-11-14-optiimg-core-cli.md](superpowers/plans/2026-
 
 ```mermaid
 flowchart LR
-    subgraph CLI["cmd/optiimg (đụng đĩa)"]
+    subgraph CLI["src/cmd/optiimg (đụng đĩa)"]
         main["main.go<br/>flag, luồng tổng, mã thoát"]
         confirm["confirm.go<br/>hỏi y/N"]
         scan["scan.go<br/>duyệt thư mục"]

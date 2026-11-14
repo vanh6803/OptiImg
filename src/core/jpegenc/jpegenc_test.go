@@ -7,12 +7,12 @@ import (
 	"os"
 	"testing"
 
-	"optiimg/core/metric"
+	"optiimg/src/core/metric"
 )
 
 func loadPhoto(t testing.TB) image.Image {
 	t.Helper()
-	b, err := os.ReadFile("../../testdata/photo.jpg")
+	b, err := os.ReadFile("../../../testdata/photo.jpg")
 	if err != nil {
 		t.Fatal(err)
 	}

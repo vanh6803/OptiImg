@@ -6,7 +6,7 @@ import (
 	"image/jpeg"
 	"math"
 
-	"optiimg/core/metric"
+	"optiimg/src/core/metric"
 )
 
 // IJG standard luminance table (natural order) and the zigzag scan order.

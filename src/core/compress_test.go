@@ -12,7 +12,7 @@ import (
 
 func readTestdata(t *testing.T, name string) []byte {
 	t.Helper()
-	b, err := os.ReadFile("../testdata/" + name)
+	b, err := os.ReadFile("../../testdata/" + name)
 	if err != nil {
 		t.Fatal(err)
 	}

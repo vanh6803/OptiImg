@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/sync/semaphore"
 
-	"optiimg/core"
+	"optiimg/src/core"
 )
 
 // DefaultWorkers returns clamp(numCPU/2, 1, 4).

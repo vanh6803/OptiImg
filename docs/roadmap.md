@@ -35,7 +35,7 @@ Task 11 cần Task 7.
 - Chưa đo CPU thực tế bằng Activity Monitor (Task 11 bước 6).
 - **Bộ nhớ khi nén JPEG lớn:** `jpegli` (wasm) cần ≈ 45 byte/pixel: ảnh 50 MP (8640×5760) đỉnh RSS ≈ 2,4 GB, 100 MP có thể ≈ 4,5 GB. Đã đo ngày 2026-11-14. Đã giảm số lần mã hóa lớn (tìm q trên mosaic 1 MP) và dùng ngân sách bộ nhớ; đỉnh RSS khi nén 1 ảnh 50 MP vẫn ≈ 2,5 GB vì jpegli không mã hóa theo dải. Nếu cần thấp hơn: hạ `MaxPixels` hoặc đổi encoder.
 - RAW (CR2/DNG/ARW) không hỗ trợ: quét bỏ qua theo đuôi; `--include cr2` cho ra lỗi "định dạng không được hỗ trợ", file giữ nguyên.
-- Test ảnh nặng: `OPTIIMG_HEAVY_DIR=<thư mục> go test ./core/ -run Heavy -v` (ảnh không commit vì quá lớn).
+- Test ảnh nặng: `OPTIIMG_HEAVY_DIR=<thư mục> go test ./src/core/ -run Heavy -v` (ảnh không commit vì quá lớn).
 - Ngưỡng ảnh tham chiếu đã chuyển sang tỉ lệ vì ảnh gốc đã mất (xem `testdata/README.md`).
 
 - JPEG > 4 MP: q tìm trên mosaic 4 mảnh 512×512 nên SSIM/PSNR trong Report là của mẫu, không phải toàn ảnh.

@@ -36,7 +36,7 @@ func fixtures(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	for _, n := range []string{"logo.png", "photo.png", "photo.jpg"} {
-		b, err := os.ReadFile("../../testdata/" + n)
+		b, err := os.ReadFile("../../../testdata/" + n)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,7 +180,7 @@ func TestE2EDryRun(t *testing.T) {
 
 func TestE2EErrorExitCode(t *testing.T) {
 	dir := fixtures(t)
-	b, _ := os.ReadFile("../../testdata/photo.png")
+	b, _ := os.ReadFile("../../../testdata/photo.png")
 	write(t, dir, "broken.png", b[:len(b)/2], 0o644)
 	before := sizes(t, dir, three...)
 	out, code := runBin(t, dir, nil, "-y")

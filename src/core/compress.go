@@ -8,10 +8,10 @@ import (
 	"image/png"
 	"math"
 
-	"optiimg/core/jpegenc"
-	"optiimg/core/metric"
-	"optiimg/core/pngenc"
-	"optiimg/core/quant"
+	"optiimg/src/core/jpegenc"
+	"optiimg/src/core/metric"
+	"optiimg/src/core/pngenc"
+	"optiimg/src/core/quant"
 )
 
 // palettePSNRGate is the second quality gate for palette size: SSIM on luma

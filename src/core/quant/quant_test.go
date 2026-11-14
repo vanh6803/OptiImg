@@ -9,12 +9,12 @@ import (
 	"os"
 	"testing"
 
-	"optiimg/core/metric"
+	"optiimg/src/core/metric"
 )
 
 func loadNRGBA(t testing.TB, name string) *image.NRGBA {
 	t.Helper()
-	b, err := os.ReadFile("../../testdata/" + name)
+	b, err := os.ReadFile("../../../testdata/" + name)
 	if err != nil {
 		t.Fatal(err)
 	}

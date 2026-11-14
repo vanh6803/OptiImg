@@ -71,7 +71,7 @@ func TestIsAnimatedPNG(t *testing.T) {
 	if !IsAnimatedPNG(anim) {
 		t.Error("APNG not detected")
 	}
-	logo, err := os.ReadFile("../testdata/logo.png")
+	logo, err := os.ReadFile("../../testdata/logo.png")
 	if err != nil {
 		t.Fatal(err)
 	}

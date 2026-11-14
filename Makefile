@@ -9,17 +9,17 @@ test:
 	go test -race ./...
 
 build:
-	CGO_ENABLED=0 go build $(GOFLAGS_REL) -o optiimg ./cmd/optiimg
+	CGO_ENABLED=0 go build $(GOFLAGS_REL) -o optiimg ./src/cmd/optiimg
 
 install:
-	CGO_ENABLED=0 go install $(GOFLAGS_REL) ./cmd/optiimg
+	CGO_ENABLED=0 go install $(GOFLAGS_REL) ./src/cmd/optiimg
 
 build-all:
 	@mkdir -p dist
 	@for p in $(PLATFORMS); do \
 		os=$${p%/*}; arch=$${p#*/}; ext=""; [ $$os = windows ] && ext=".exe"; \
 		echo "build $$os/$$arch"; \
-		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build $(GOFLAGS_REL) -o dist/optiimg_$${os}_$${arch}$$ext ./cmd/optiimg || exit 1; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build $(GOFLAGS_REL) -o dist/optiimg_$${os}_$${arch}$$ext ./src/cmd/optiimg || exit 1; \
 	done
 
 package: clean build-all
