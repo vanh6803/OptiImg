@@ -6,7 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 CI tests, builds, creates the `vx.y.z` tag and the GitHub Release, using that section as the release notes.
 See [docs/release.md](docs/release.md).
 
-## [Unreleased]
+## [0.2.0] - 2026-11-15
+
+New formats (WebP, AVIF, JPEG XL), format conversion, lower memory use on large photos, and English messages.
 
 ### Changed
 - Images above 16 MP now use a low-memory JPEG path (streaming encode + lossless Huffman optimisation):
@@ -23,6 +25,9 @@ See [docs/release.md](docs/release.md).
 - Non-sRGB ICC profiles (PNG `iCCP`, JPEG APP2) are now preserved instead of dropped, so Display P3/AdobeRGB photos keep
   their colours; `--strip-icc` restores the old behaviour. Reported as `icc_profile_kept` in `--json`.
 - `--lang vi|en` (and `OPTIIMG_LANG`) to choose the language of CLI messages, including usage and errors.
+
+### Documentation
+- README rewritten around a real before/after example (`docs/images/`) and measured results.
 
 ## [0.1.0] - 2026-11-14
 
